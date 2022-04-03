@@ -34,11 +34,11 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     PR_F(double* _p_curr, double* _p_next, vertex* _V) : // Constructor?
             z_curr(_p_curr), z_next(_p_next), V(_V) {}
     inline bool update(uintE s, uintE d){ //update function applies PageRank equation
-        p_next[d] += p_curr[s]/V[s].getOutDegree(); // Ariel Update vertex values. inline ~= static
+        z_next[d] += z_curr[s]/V[s].getOutDegree(); // Ariel Update vertex values. inline ~= static
         return 1;
     }
     inline bool updateAtomic (uintE s, uintE d) { //atomic Update
-        writeAdd(&p_next[d],p_curr[s]/V[s].getOutDegree()); // TODO Ariel When to use this vs. Normal
+        writeAdd(&z_next[d],z_curr[s]/V[s].getOutDegree()); // TODO Ariel When to use this vs. Normal
         return 1;
     }
     inline bool cond (intT d) { return cond_true(d); }}; // No condition. Apply to all vertices
@@ -75,6 +75,7 @@ struct PR_Vertex_Reset {
     }
 };
 
+
 template <class vertex>
 void Compute(graph<vertex>& GA, commandLine P) { // Call PageRank
     long maxIters = P.getOptionLongValue("-maxiters",100);
@@ -82,48 +83,7 @@ void Compute(graph<vertex>& GA, commandLine P) { // Call PageRank
     std::vector<float> Y(k, 0.0);
 
     const intE n = GA.n;
-//    const double damping = 0.85, epsilon = 0.0000001;
-
-//    k = Y[:,0].max() + 1
-
-//#nk: 1*n array, contains the number of observations in each class
-//#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
-//    nk = np.zeros((1,k))
-    std::vector<float> nk(k, 0.0);
-//    std::array<float,[n,k]>::fill(const T& value);
-//    W = np.zeros((n,k))
-    float W[n][k]; // TODO Should I initialize this with 0s?
-
-//    for i in range(k):
-    for (int i=0; i<k; i++)
-//        nk[0,i] = np.count_nonzero(Y[:,0]==i)
-        for (int j=0; j<n, )
-
-    for i in range(Y.shape[0]):
-    k_i = Y[i,0]
-    if k_i >=0:
-    W[i,k_i] = 1/nk[0,k_i]
-
-//# Edge List Version in O(s)
-    Z = np.zeros((n,k))
-    i = 0
-
-    for row in X:
-    [v_i, v_j, edg_i_j] = row
-    v_i = int(v_i)
-    v_j = int(v_j)
-
-    label_i = Y[v_i][0]
-    label_j = Y[v_j][0]
-
-    if label_j >= 0:
-    Z[v_i, label_j] = Z[v_i, label_j] + W[v_j, label_j]*edg_i_j
-    if (label_i >= 0) and (v_i != v_j):
-    Z[v_j, label_i] = Z[v_j, label_i] + W[v_i, label_i]*edg_i_j
-
-
-    return Z, W
-
+    const double damping = 0.85, epsilon = 0.0000001;
     double one_over_n = 1/(double)n; // Init all to this
     double* p_curr = newA(double,n);
     {parallel_for(long i=0;i<n;i++) p_curr[i] = one_over_n;} // Init all in parallel
@@ -131,6 +91,58 @@ void Compute(graph<vertex>& GA, commandLine P) { // Call PageRank
     {parallel_for(long i=0;i<n;i++) p_next[i] = 0;} //0 if unchanged
     bool* frontier = newA(bool,n); // TODO ??
     {parallel_for(long i=0;i<n;i++) frontier[i] = 1;} // TOdo All vertices included?
+
+
+//    k = Y[:,0].max() + 1
+
+//#nk: 1*n array, contains the number of observations in each class
+//#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
+
+    std::vector<float> nk(k, 0.0);  //nk = np.zeros((1,k))
+//    std::array<float,[n,k]>::fill(const T& value);
+//    W = np.zeros((n,k))
+    float W[n][k]; // TODO Should I initialize this with 0s?
+
+//    for i in range(k):
+
+//    for (int i=0; i<k; i++) {
+////        nk[0,i] = np.count_nonzero(Y[:,0]==i)
+//        // TODO Ariel Something weird in GEE code. Just port it to C++ for now
+//        int nonzeroYCount = std::count_if(Y.begin(),Y.end(), [](int x){return x == 0; });
+////        if (Y[i] == 0)
+////            nonzeroYCount++;
+//        // Ariel - let's assume Y is 1D for now TODO fix later
+////        for (int j = 0; j < n; j++) {
+////
+////        }
+//    }
+//
+//    for i in range(Y.shape[0]):
+//    k_i = Y[i,0]
+//    if k_i >=0:
+//    W[i,k_i] = 1/nk[0,k_i]
+//
+////# Edge List Version in O(s)
+//    Z = np.zeros((n,k))
+//    i = 0
+//
+//    for row in X:
+//    [v_i, v_j, edg_i_j] = row
+//    v_i = int(v_i)
+//    v_j = int(v_j)
+//
+//    label_i = Y[v_i][0]
+//    label_j = Y[v_j][0]
+//
+//    if label_j >= 0:
+//    Z[v_i, label_j] = Z[v_i, label_j] + W[v_j, label_j]*edg_i_j
+//    if (label_i >= 0) and (v_i != v_j):
+//    Z[v_j, label_i] = Z[v_j, label_i] + W[v_i, label_i]*edg_i_j
+//
+//
+//    return Z, W
+
+
 
     vertexSubset Frontier(n,n,frontier);
 
