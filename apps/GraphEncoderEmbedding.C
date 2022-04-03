@@ -107,7 +107,10 @@ void Compute(graph<vertex>& GA, commandLine P) { // Call PageRank
     bool* frontier = newA(bool,n); // TODO ??
     {parallel_for(long i=0;i<n;i++) frontier[i] = 1;} // TOdo All vertices included?
 
-    std::vector<int> Y(n, 0); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
+    int* Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
+    for (int i = 0; i < n; i++) {
+        Y[i] = (i % 2);
+    }
 
 //    k = Y[:,0].max() + 1
 
@@ -148,17 +151,14 @@ void Compute(graph<vertex>& GA, commandLine P) { // Call PageRank
 //    Loop
     long iter = 0;
     while(iter++ < maxIters) {
-        edgeMap(GA,Frontier,PR_F<vertex>(p_curr,p_next,GA.V, k),0, no_output);
+        edgeMap(GA,Frontier,PR_F<vertex>(p_curr,p_next,Y, *W, GA.V),0, no_output);
         vertexMap(Frontier,PR_Vertex_F(p_curr,p_next,damping,n));
-        //compute L1-norm between p_curr and p_next
-        {parallel_for(long i=0;i<n;i++) {
-                p_curr[i] = fabs(p_curr[i]-p_next[i]);
-            }}
-        double L1_norm = sequence::plusReduce(p_curr,n);
-        if(L1_norm < epsilon) break;
-        //reset p_curr
-        vertexMap(Frontier,PR_Vertex_Reset(p_curr));
+
+        vertexMap(Frontier,PR_Vertex_Reset(p_curr)); // Reset Values
         swap(p_curr,p_next);
     }
+    cout << p_curr;
+    cout << W;
+    // TODO Ariel I should probably free(W,Z,Y)
     Frontier.del(); free(p_curr); free(p_next);
 }
