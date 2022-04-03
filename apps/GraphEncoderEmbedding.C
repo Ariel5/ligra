@@ -25,19 +25,32 @@
 #include "ligra.h"
 #include "math.h"
 
+// TODO Ariel Assuming unweighted graph - No weighed examples in Ligra, despite how supposedly "easy" it is to extend
 
 // Ariel - PRUpdate(s,d) in paper
 template <class vertex>
 struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     double* z_curr, *z_next; // Ariel - these are already vectors! No need to worry about assigning them
+    int* Y; // Supervised labels for each vertex. More fitting as memeber of Vertex class but whatever
+    float* W; // Projection matrix
 
     vertex* V;
-    PR_F(double* _z_curr, double* _z_next, vertex* _V) : // Constructor?
-            z_curr(_z_curr), z_next(_z_next), V(_V) {}
+    PR_F(double* _z_curr, double* _z_next, int* _Y, float* _W, vertex* _V) : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
+            z_curr(_z_curr), z_next(_z_next), Y(_Y), W(_W), V(_V) {}
+    // Ariel - unable to debug what s is. Try to just use it for now
+    // TODO Ariel Which is the source and destination vertices?
     inline bool update(uintE s, uintE d){ //update function applies PageRank equation
-        z_next[d] += z_curr[s]/V[s].getOutDegree(); // Ariel Update vertex values. inline ~= static
+//        z_next[d] += z_curr[s]/V[s].getOutDegree(); // Ariel Update vertex values. inline ~= static
+        if (Y[d] >= 0) { // v_i in GEE.py = s here. v_j = d
+            z_next[s, Y[d]] = z_curr[s, Y[d]] + W[d, Y[d]]*1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
+        }
+        if (Y[s] >= 0) {
+            z_next[d, Y[s]] = z_curr[d, Y[s]] + W[s, Y[s]]*1;
+        }
         return 1;
     }
+
+    // TODO Ariel Hope this isn't used bcs. I didn't change it lol
     inline bool updateAtomic (uintE s, uintE d) { //atomic Update
         writeAdd(&z_next[d],z_curr[s]/V[s].getOutDegree()); // TODO Ariel When to use this vs. Normal
         return 1;
