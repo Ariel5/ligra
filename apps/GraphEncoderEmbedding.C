@@ -155,7 +155,8 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
             W[i][k_i] = 1 / nk[k_i];
     }
 
-    float Z[k][n]; // Not init-ed to 0
+    double Z_curr[k][n]; // Not init-ed to 0
+    double Z_next[k][n]; // Not init-ed to 0
 
 //    for (int i=0; i<GA.m; i++) { // Loop over edges. EdgeMap goes here
 //        in
@@ -167,7 +168,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     // TODO TOP Each vertex has (kxn) Z-matrix?
     long iter = 0;
     while (iter++ < maxIters) {
-        edgeMap(GA, Frontier, PR_F<vertex>(p_curr, p_next, Y, *W, GA.V), 0, no_output);
+        edgeMap(GA, Frontier, PR_F<vertex>(*Z_curr, *Z_next, Y, *W, GA.V), 0, no_output);
         vertexMap(Frontier, PR_Vertex_F(p_curr, p_next, 0.0, n));
 
         vertexMap(Frontier, PR_Vertex_Reset(p_curr)); // Reset Values
@@ -177,12 +178,12 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 //    cout << "W: "<<W;
 
     // Print p_curr
-    for (int i = 0; i < n; i++) {
-        cout << Z[0][i] << " " << Z[1][i] << "\n";
-    }
+//    for (int i = 0; i < n; i++) {
+//        cout << Z[0][i] << " " << Z[1][i] << "\n";
+//    }
 
     Frontier.del();
     free(p_curr);
     free(p_next);
-    free(W);
+//    free(W);
 }
