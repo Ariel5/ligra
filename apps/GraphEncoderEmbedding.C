@@ -31,25 +31,39 @@
 template<class vertex>
 struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     double *z_curr, *z_next; // Ariel - these are already vectors! No need to worry about assigning them
+//    double *z_curr2, *z_next2; // TODO Ariel make matrix later. C++ pointers are fighting me. Now: check correctness
     int *Y; // Supervised labels for each vertex. More fitting as memeber of Vertex class but whatever
-    float *W; // Projection matrix
-
     vertex *V;
+    const int n;
 
-    PR_F(double *_z_curr, double *_z_next, int *_Y, float *_W, vertex *_V)
+    // 1st in // 1st in https://stackoverflow.com/questions/8767166/passing-a-2d-array-to-a-c-function
+        // "Array initializer must be a list"
+//    float W[5][2];
+//    PR_F(double *_z_curr1, double *_z_next1,double *_z_curr2, double *_z_next2, int *_Y, float _W[][2], vertex *_V)
+//            : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
+//            z_curr1(_z_curr1), z_next1(_z_next1), z_curr2(_z_curr2), z_next2(_z_next2), Y(_Y), W(_W), V(_V) {}
+
+    // 2nd - "Array initializer must be a list"
+//    float *W[2];
+//    PR_F(double *_z_curr1, double *_z_next1,double *_z_curr2, double *_z_next2, int *_Y, float *_W[2], vertex *_V)
+//            : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
+//            z_curr1(_z_curr1), z_next1(_z_next1), z_curr2(_z_curr2), z_next2(_z_next2), Y(_Y), W(_W), V(_V) {}
+
+    float *W;
+    PR_F(double *_z_curr, double *_z_next, const int _n, int *_Y, float *_W, vertex *_V)
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
-            z_curr(_z_curr), z_next(_z_next), Y(_Y), W(_W), V(_V) {}
+            z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V) {}
 
     // Ariel - unable to debug what s is. Try to just use it for now
     // TODO Ariel Which is the source and destination vertices?
     inline bool update(uintE s, uintE d) { //update function applies PageRank equation
 //        z_next[d] += z_curr[s]/V[s].getOutDegree(); // Ariel Update vertex values. inline ~= static
         if (Y[d] >= 0) { // v_i in GEE.py = s here. v_j = d
-            z_next[s, Y[d]] = z_curr[s, Y[d]] + W[d, Y[d]] *
+            z_next[Y[d]*n + s] = z_curr[Y[d]*n + s] + W[Y[d]*n + d] *
                                                 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
         }
         if (Y[s] >= 0) {
-            z_next[d, Y[s]] = z_curr[d, Y[s]] + W[s, Y[s]] * 1;
+            z_next[Y[s]*n + d] = z_curr[Y[s]*n + d] + W[Y[s]*n + s] * 1;
         }
         return 1;
     }
@@ -109,10 +123,18 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
     const intE n = GA.n;
 
-    double *p_curr = newA(double, n);
-    { parallel_for (long i = 0; i < n; i++) p_curr[i] = 0; } // Init all in parallel
-    double *p_next = newA(double, n);
-    { parallel_for (long i = 0; i < n; i++) p_next[i] = 0; } //0 if unchanged
+    double *p_curr1 = newA(double, n+1);
+    { parallel_for (long i = 0; i < n; i++) p_curr1[i] = 10+i; } // Init all in parallel
+    p_curr1[n] = NAN;
+    double *p_next1 = newA(double, n+1);
+    { parallel_for (long i = 0; i < n; i++) p_next1[i] = 20+i; } //0 if unchanged
+    p_next1[n] = NAN;
+//    double *p_curr2 = newA(double, n+1);
+//    { parallel_for (long i = 0; i < n; i++) p_curr2[i] = 10+i; } // Init all in parallel
+//    p_curr2[n] = NAN;
+//    double *p_next2 = newA(double, n+1);
+//    { parallel_for (long i = 0; i < n; i++) p_next2[i] = 20+i; } //0 if unchanged
+//    p_next2[n] = NAN;
     bool *frontier = newA(bool, n); // Frontier should be whole graph's edges
     { parallel_for (long i = 0; i < n; i++) frontier[i] = 1; }
 
@@ -123,19 +145,12 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     Y[3] = 1;
     Y[4] = 1; // Same as GEE.py 5x5 case
 
-    // Init Y to 2 labels
-//        for (int i = 0; i < n; i++) {
-//        Y[i] = (i % 2);
-//    }
-//    k = Y[:,0].max() + 1
-
 //#nk: 1*n array, contains the number of observations in each class
 //#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
 
     std::vector<float> nk(k, 0.0);  //nk = np.zeros((1,k))
 //    std::array<float,[n,k]>::fill(const T& value);
 //    W = np.zeros((n,k))
-    float W[n][k]; // TODO Should I initialize this with 0s?
 
     // Not doing possibility_detected
     for (int i = 0; i < k; i++) {
@@ -149,41 +164,51 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         }
     }
 
+    vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
+
+    // 1st in https://stackoverflow.com/questions/8767166/passing-a-2d-array-to-a-c-function
+    // 2nd, again Arary list initilaizter
+//    float *W[k];
+//    for (int i = 0; i < k; i++) {
+//        W[i] = new float[n];
+//    }
+
+    float *W = newA(float, n*k+1);
+    { parallel_for (long i = 0; i < n*k; i++) W[i] = 33.3; }
+    W[n*k] = NAN;
+
     for (int i = 0; i < n; i++) { // For i in range(Y.shape[0])
         int k_i = Y[i]; // TODO LOW Using 1D Y
         if (k_i >= 0)
-            W[i][k_i] = 1 / nk[k_i];
+            W[k_i*n + i] = 1 / nk[k_i];
     }
-
-    double Z_curr[k][n]; // Not init-ed to 0
-    double Z_next[k][n]; // Not init-ed to 0
-
-//    for (int i=0; i<GA.m; i++) { // Loop over edges. EdgeMap goes here
-//        in
-//        X:
-//    }
-
-    vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
 
     // TODO TOP Each vertex has (kxn) Z-matrix?
     long iter = 0;
     while (iter++ < maxIters) {
-        edgeMap(GA, Frontier, PR_F<vertex>(*Z_curr, *Z_next, Y, *W, GA.V), 0, no_output);
-        vertexMap(Frontier, PR_Vertex_F(p_curr, p_next, 0.0, n));
+        edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
+        vertexMap(Frontier, PR_Vertex_F(p_curr1, p_next1, 0.0, n));
 
-        vertexMap(Frontier, PR_Vertex_Reset(p_curr)); // Reset Values
-        swap(p_curr, p_next);
+        vertexMap(Frontier, PR_Vertex_Reset(p_curr1)); // Reset Values
+//        vertexMap(Frontier, PR_Vertex_Reset(p_curr2));
+        swap(p_curr1, p_next1);
+//        swap(p_curr2, p_next2);
     }
 //    cout << "Current Embedding values (Z-projection): " << *p_curr;
 //    cout << "W: "<<W;
 
     // Print p_curr
-//    for (int i = 0; i < n; i++) {
-//        cout << Z[0][i] << " " << Z[1][i] << "\n";
-//    }
+    for (int i = 0; i < n*k; i++) {
+//        if (i % n == 0) { cout<<"\n"; }
+        cout << p_curr1[i] << "\n";
+    }
+
+    int gimi = 5;
 
     Frontier.del();
-    free(p_curr);
-    free(p_next);
+    free(p_curr1);
+//    free(p_curr2);
+    free(p_next1);
+//    free(p_next2);
 //    free(W);
 }
