@@ -58,7 +58,7 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     // TODO Ariel Which is the source and destination vertices?
     inline bool update(uintE s, uintE d) { //update function applies PageRank equation
 //        z_next[d] += z_curr[s]/V[s].getOutDegree(); // Ariel Update vertex values. inline ~= static
-        if (Y[d] >= 0) { // v_i in GEE.py = s here. v_j = d
+        if (Y[d] >= 0) { // TODO Ariel TOP I need some kind of += for curr and next
             z_next[Y[d]*n + s] = z_curr[Y[d]*n + s] + W[Y[d]*n + d] *
                                                 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
         }
@@ -116,19 +116,19 @@ struct PR_Vertex_Reset {
 
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
-    long maxIters = P.getOptionLongValue("-maxiters", 100);
-
 //    long k = P.getOptionLongValue("-nClusters", 5); // TODO Ariel Impl. this later
     int k = 2;
 
     const intE n = GA.n;
+    // Run for nr. of edges
+    long maxIters = P.getOptionLongValue("-maxiters", GA.m);
 
-    double *p_curr1 = newA(double, n+1);
-    { parallel_for (long i = 0; i < n; i++) p_curr1[i] = 10+i; } // Init all in parallel
-    p_curr1[n] = NAN;
-    double *p_next1 = newA(double, n+1);
-    { parallel_for (long i = 0; i < n; i++) p_next1[i] = 20+i; } //0 if unchanged
-    p_next1[n] = NAN;
+    double *p_curr1 = newA(double, n*k+1);
+    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
+    p_curr1[n*k] = NAN;
+    double *p_next1 = newA(double, n*k+1);
+    { parallel_for (long i = 0; i < n*k; i++) p_next1[i] = 0; } //0 if unchanged
+    p_next1[n*k] = NAN;
 //    double *p_curr2 = newA(double, n+1);
 //    { parallel_for (long i = 0; i < n; i++) p_curr2[i] = 10+i; } // Init all in parallel
 //    p_curr2[n] = NAN;
@@ -148,21 +148,23 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 //#nk: 1*n array, contains the number of observations in each class
 //#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
 
-    std::vector<float> nk(k, 0.0);  //nk = np.zeros((1,k))
+//    std::vector<int> nk(k, 0);  //nk = np.zeros((1,k))
 //    std::array<float,[n,k]>::fill(const T& value);
 //    W = np.zeros((n,k))
 
     // Not doing possibility_detected
-    for (int i = 0; i < k; i++) {
-        // TODO Ariel Something weird in GEE code. Just port it to C++ for now
-        int nonzeroYCount = 0;
-        for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
-            if (Y[i] != i)
-                nonzeroYCount++;
-
-            nk[i] = nonzeroYCount;
-        }
-    }
+    int nk[2] = {3,2};
+    // TODO Ariel implement count_nonzero later. Should return nk = {3,2}
+//    for (int i = 0; i < k; i++) {
+//        // TODO Ariel Something weird in GEE code. Just port it to C++ for now
+//        int nonzeroYCount = 0;
+//        for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
+//            if (Y[i] != i)
+//                nonzeroYCount++;
+//
+//            nk[i] = nonzeroYCount;
+//        }
+//    }
 
     vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
 
@@ -174,20 +176,34 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 //    }
 
     float *W = newA(float, n*k+1);
-    { parallel_for (long i = 0; i < n*k; i++) W[i] = 33.3; }
+    { parallel_for (long i = 0; i < n*k; i++) W[i] = 0; }
     W[n*k] = NAN;
 
     for (int i = 0; i < n; i++) { // For i in range(Y.shape[0])
         int k_i = Y[i]; // TODO LOW Using 1D Y
         if (k_i >= 0)
-            W[k_i*n + i] = 1 / nk[k_i];
+            W[k_i*n + i] = 1.0 / nk[k_i];
     }
+    // So far, W is good
 
     // TODO TOP Each vertex has (kxn) Z-matrix?
     long iter = 0;
     while (iter++ < maxIters) {
         edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
         vertexMap(Frontier, PR_Vertex_F(p_curr1, p_next1, 0.0, n));
+
+        cout << "\niter: " << iter << "\n\n";
+        cout << "\n p_curr: \t";
+        for (int i = 0; i < n*k; i++) {
+//        if (i % n == 0) { cout<<"\n"; }
+            cout << p_curr1[i] << "\t";
+        }
+
+        cout << "\n p_next: \t";
+        for (int i = 0; i < n*k; i++) {
+//        if (i % n == 0) { cout<<"\n"; }
+            cout << p_next1[i] << "\t";
+        }
 
         vertexMap(Frontier, PR_Vertex_Reset(p_curr1)); // Reset Values
 //        vertexMap(Frontier, PR_Vertex_Reset(p_curr2));
@@ -198,12 +214,14 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 //    cout << "W: "<<W;
 
     // Print p_curr
-    for (int i = 0; i < n*k; i++) {
-//        if (i % n == 0) { cout<<"\n"; }
-        cout << p_curr1[i] << "\n";
-    }
+//    for (int i = 0; i < n*k; i++) {
+////        if (i % n == 0) { cout<<"\n"; }
+//        cout << p_curr1[i] << "\n";
+//    }
 
-    int gimi = 5;
+    cout << "\n\n\n--------------Finished one whole run----------\n\n\n";
+
+    int debug_placeholder = 5;
 
     Frontier.del();
     free(p_curr1);
