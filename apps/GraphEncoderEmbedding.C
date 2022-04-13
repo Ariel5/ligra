@@ -143,32 +143,26 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     { parallel_for (long i = 0; i < n; i++) frontier[i] = 1; }
 
     int *Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
-    Y[0] = 0;
-    Y[1] = 0;
-    Y[2] = 0;
+    { parallel_for (long i = 0; i < n*k; i++) Y[i] = 0; } // Fill with 0-s
     Y[3] = 1;
-    Y[4] = 1; // Same as GEE.py 5x5 case
+    Y[4] = 1; // Same as GEE.py easy 5x5 case
 
 //#nk: 1*n array, contains the number of observations in each class
 //#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
 
-//    std::vector<int> nk(k, 0);  //nk = np.zeros((1,k))
-//    std::array<float,[n,k]>::fill(const T& value);
-//    W = np.zeros((n,k))
-
     // Not doing possibility_detected
-    int nk[2] = {3,2};
+//    int nk[2] = {3,2};
+    int nk[k];
     // TODO Ariel implement count_nonzero later. Should return nk = {3,2}
-//    for (int i = 0; i < k; i++) {
-//        // TODO Ariel Something weird in GEE code. Just port it to C++ for now
-//        int nonzeroYCount = 0;
-//        for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
-//            if (Y[i] != i)
-//                nonzeroYCount++;
-//
-//            nk[i] = nonzeroYCount;
-//        }
-//    }
+    for (int i = 0; i < k; i++) {
+        // TODO Ariel Why need count of indices nk?
+        int nonzeroYCount = 0;
+        for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
+            if (Y[j] == i)
+                nonzeroYCount++;
+        }
+        nk[i] = nonzeroYCount;
+    }
 
     vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
 
