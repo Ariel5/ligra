@@ -64,18 +64,17 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
         s = temp;
 
         if (Y[d] >= 0) { // TODO Ariel TOP I need some kind of += for curr and next
-            z_next[Y[d]*n + s] = z_curr[Y[d]*n + s] + W[Y[d]*n + d] *
-                                                1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
+            z_next[Y[d]*n + s] += W[Y[d]*n + d] * 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
         }
         if (Y[s] >= 0) {
-            z_next[Y[s]*n + d] = z_curr[Y[s]*n + d] + W[Y[s]*n + s] * 1;
+            z_next[Y[s]*n + d] += W[Y[s]*n + s] * 1;
         }
         return 1;
     }
 
     // TODO Ariel Hope this isn't used bcs. I didn't change it lol
     inline bool updateAtomic(uintE s, uintE d) { //atomic Update
-        writeAdd(&z_next[d], z_curr[s] / V[s].getOutDegree()); // TODO Ariel When to use this vs. Normal
+//        writeAdd(&z_next[d], z_curr[s] / V[s].getOutDegree()); // TODO Ariel When to use this vs. Normal
         return 1;
     }
 
@@ -195,14 +194,14 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     long iter = 0;
     while (iter++ < maxIters) {
         edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
-        vertexMap(Frontier, PR_Vertex_F(p_curr1, p_next1, 0.0, n));
+//        vertexMap(Frontier, PR_Vertex_F(p_curr1, p_next1, 0.0, n));
 
         cout << "\niter: " << iter << "\n\n";
-        cout << "\n p_curr: \t";
-        for (int i = 0; i < n*k; i++) {
-//        if (i % n == 0) { cout<<"\n"; }
-            cout << p_curr1[i] << "\t";
-        }
+//        cout << "\n p_curr: \t";
+//        for (int i = 0; i < n*k; i++) {
+////        if (i % n == 0) { cout<<"\n"; }
+//            cout << p_curr1[i] << "\t";
+//        }
 
         cout << "\n p_next: \t";
         for (int i = 0; i < n*k; i++) {
