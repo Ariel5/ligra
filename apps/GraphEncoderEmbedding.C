@@ -120,12 +120,12 @@ struct PR_Vertex_Reset {
 
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
-//    long k = P.getOptionLongValue("-nClusters", 5); // TODO Ariel Impl. this later
-    int k = 2;
+    const long k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
+//    int k = 2;
 
     const intE n = GA.n;
     // Run for nr. of edges
-    long maxIters = P.getOptionLongValue("-maxiters", 1);
+    const long maxIters = P.getOptionLongValue("-maxiters", 1);
 
     double *p_curr1 = newA(double, n*k+1);
     { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
@@ -133,19 +133,22 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     double *p_next1 = newA(double, n*k+1);
     { parallel_for (long i = 0; i < n*k; i++) p_next1[i] = 0; } //0 if unchanged
     p_next1[n*k] = NAN;
-//    double *p_curr2 = newA(double, n+1);
-//    { parallel_for (long i = 0; i < n; i++) p_curr2[i] = 10+i; } // Init all in parallel
-//    p_curr2[n] = NAN;
-//    double *p_next2 = newA(double, n+1);
-//    { parallel_for (long i = 0; i < n; i++) p_next2[i] = 20+i; } //0 if unchanged
-//    p_next2[n] = NAN;
     bool *frontier = newA(bool, n); // Frontier should be whole graph's edges
     { parallel_for (long i = 0; i < n; i++) frontier[i] = 1; }
 
     int *Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
-    { parallel_for (long i = 0; i < n*k; i++) Y[i] = 0; } // Fill with 0-s
-    Y[3] = 1;
-    Y[4] = 1; // Same as GEE.py easy 5x5 case
+//    { parallel_for (long i = 0; i < n*k; i++) Y[i] = 0; } // Fill with 0-s
+//    Y[3] = 1;
+//    Y[4] = 1; // Same as GEE.py easy 5x5 case
+
+    cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
+    double a;
+    std::ifstream infile("../inputs/Y-facebook-5percent.txt");
+    int i = 0;
+    while (infile >> a) {
+        Y[i] = (int)a;
+        i++;
+    }
 
 //#nk: 1*n array, contains the number of observations in each class
 //#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
@@ -166,12 +169,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
     vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
 
-    // 1st in https://stackoverflow.com/questions/8767166/passing-a-2d-array-to-a-c-function
-    // 2nd, again Arary list initilaizter
-//    float *W[k];
-//    for (int i = 0; i < k; i++) {
-//        W[i] = new float[n];
-//    }
+
 
     float *W = newA(float, n*k+1);
     { parallel_for (long i = 0; i < n*k; i++) W[i] = 0; }
@@ -223,8 +221,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
     Frontier.del();
     free(p_curr1);
-//    free(p_curr2);
     free(p_next1);
-//    free(p_next2);
-//    free(W);
+    free(W);
+    free(Y);
 }
