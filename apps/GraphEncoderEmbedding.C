@@ -54,10 +54,15 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
             z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V) {}
 
-    // Ariel - unable to debug what s is. Try to just use it for now
-    // TODO Ariel Which is the source and destination vertices?
+
+    // Ariel Which is the source and destination vertices?
+        // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
     inline bool update(uintE s, uintE d) { //update function applies PageRank equation
-//        z_next[d] += z_curr[s]/V[s].getOutDegree(); // Ariel Update vertex values. inline ~= static
+        // Swap s,d lol
+        uintE temp = d;
+        d = s;
+        s = temp;
+
         if (Y[d] >= 0) { // TODO Ariel TOP I need some kind of += for curr and next
             z_next[Y[d]*n + s] = z_curr[Y[d]*n + s] + W[Y[d]*n + d] *
                                                 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
@@ -121,7 +126,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
     const intE n = GA.n;
     // Run for nr. of edges
-    long maxIters = P.getOptionLongValue("-maxiters", GA.m);
+    long maxIters = P.getOptionLongValue("-maxiters", 1);
 
     double *p_curr1 = newA(double, n*k+1);
     { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
