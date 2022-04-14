@@ -25,6 +25,8 @@
 #include "ligra.h"
 #include "math.h"
 
+void print_to_file(const double* Z, string file_name, const int n, const int k);
+
 // TODO Ariel Assuming unweighted graph - No weighed examples in Ligra, despite how supposedly "easy" it is to extend
 
 // Ariel - PRUpdate(s,d) in paper
@@ -49,8 +51,8 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 //            : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
 //            z_curr1(_z_curr1), z_next1(_z_next1), z_curr2(_z_curr2), z_next2(_z_next2), Y(_Y), W(_W), V(_V) {}
 
-    float *W;
-    PR_F(double *_z_curr, double *_z_next, const int _n, int *_Y, float *_W, vertex *_V)
+    double *W;
+    PR_F(double *_z_curr, double *_z_next, const int _n, int *_Y, double *_W, vertex *_V)
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
             z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V) {}
 
@@ -59,9 +61,9 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
         // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
     inline bool update(uintE s, uintE d) { //update function applies PageRank equation
         // Swap s,d lol
-        uintE temp = d;
-        d = s;
-        s = temp;
+//        uintE temp = d;
+//        d = s;
+//        s = temp;
 
         if (Y[d] >= 0) { // TODO Ariel TOP I need some kind of += for curr and next
             z_next[Y[d]*n + s] += W[Y[d]*n + d] * 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
@@ -120,12 +122,13 @@ struct PR_Vertex_Reset {
 
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
-    const long k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
-//    int k = 2;
+//    const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
+    int k = 3;
 
     const intE n = GA.n;
     // Run for nr. of edges
     const long maxIters = P.getOptionLongValue("-maxiters", 1);
+    const int divideBy2 = P.getOptionLongValue("-divide", 1);
 
     double *p_curr1 = newA(double, n*k+1);
     { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
@@ -155,7 +158,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
     // Not doing possibility_detected
 //    int nk[2] = {3,2};
-    int nk[k];
+    int nk[k]; // Confirmed correct Facebook graph
     // TODO Ariel implement count_nonzero later. Should return nk = {3,2}
     for (int i = 0; i < k; i++) {
         // TODO Ariel Why need count of indices nk?
@@ -169,9 +172,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
     vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
 
-
-
-    float *W = newA(float, n*k+1);
+    double *W = newA(double, n*k+1); // W seems ok too, not confirmed tho
     { parallel_for (long i = 0; i < n*k; i++) W[i] = 0; }
     W[n*k] = NAN;
 
@@ -186,7 +187,12 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     long iter = 0;
     while (iter++ < maxIters) {
         edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
-//        vertexMap(Frontier, PR_Vertex_F(p_curr1, p_next1, 0.0, n));
+
+        if (divideBy2 != 0) {
+            {
+                parallel_for (long i = 0; i < n * k; i++) p_next1[i] /= 2;
+            } // TODO lol fix this. Ligra assumes undirected? goes over all edges twice
+        }
 
         cout << "\niter: " << iter << "\n\n";
 //        cout << "\n p_curr: \t";
@@ -197,7 +203,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
         cout << "\n p_next: \t";
         for (int i = 0; i < n*k; i++) {
-//        if (i % n == 0) { cout<<"\n"; }
+            if (i % n == 0) { cout<<"\n"; }
             cout << p_next1[i] << "\t";
         }
 
@@ -217,11 +223,33 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
     cout << "\n\n\n--------------Finished one whole run----------\n\n\n";
 
-    int debug_placeholder = 5;
+//    int debug_placeholder = 5;
+
+//    print_to_file(p_next1, "../inputs/Z_facebook.txt", n, k);
 
     Frontier.del();
     free(p_curr1);
     free(p_next1);
     free(W);
     free(Y);
+}
+
+void print_to_file(const double* Z, string file_name, const int n, const int k) {
+    cout << "Saving Z to " << file_name << "\n";
+    std::ofstream outfile(file_name);
+    if (outfile.is_open()) {
+        int i = 0;
+        while (i < n) {
+            string row = "";
+//            if (i % kn == 0)
+            for (int j=0; j<k; j++) {
+                row.append(std::to_string(Z[j*n + i]));
+                if (j != k-1) {
+                    row.append(","); // CSV-like
+                }
+            }
+            outfile << row << "\n";
+            i++;
+        }
+    }
 }
