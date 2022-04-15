@@ -126,6 +126,7 @@ struct PR_Vertex_Reset {
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
+    const string graphName = P.getOptionValue("-graphName", "Facebook");
 //    int k = 3;
 
     const intE n = GA.n;
@@ -143,22 +144,35 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     { parallel_for (long i = 0; i < n; i++) frontier[i] = 1; }
 
     int *Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
-    { parallel_for (long i = 0; i < n; i++) Y[i] = 0; } // Fill with 0-s
-    Y[3] = 1;
-    Y[4] = 1; // Same as GEE.py easy 5x5 case
 
-//    cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
-//    double a;
-//    std::ifstream infile("../inputs/Y-facebook-5percent.txt");
-//    int i = 0;
-//    if (infile.is_open()) {
-//        while (infile >> setw(a)) {
-//            Y[i] = (int) a;
-//            i++;
-//            if (i == n) { break; }
-//        }
-//    }
+    if (graphName == "Easy") {
+        cout << "Easy graph\n";
+        { parallel_for (long i = 0; i < n; i++) Y[i] = 0; } // Fill with 0-s
+        Y[3] = 1;
+        Y[4] = 1; // Same as GEE.py easy 5x5 case
+    }
+    else if (graphName == "Facebook") {
+        cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
+        double a;
+        std::ifstream infile("../inputs/Y-facebook-5percent.txt");
+        int i = 0;
+        if (infile.is_open()) {
+            while (infile >> setw(a)) {
+                Y[i] = (int) a;
+                i++;
+                if (i == n) { break; }
+            }
+        }
+    }
+    else if (graphName == "LiveJournal") {
 
+    }
+    else {
+        cout << "Wrong input graph name. Inputs are case sensitive. Possible inputs: Easy, Facebook, LiveJournal\n\n";
+        exit(-1);
+    }
+
+//    cout <<
 //#nk: 1*n array, contains the number of observations in each class
 //#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
 
