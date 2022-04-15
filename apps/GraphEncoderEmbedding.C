@@ -66,6 +66,7 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 //        uintE temp = d;
 //        d = s;
 //        s = temp;
+        cout << d << " " << s << "\n";
 
         if (Y[d] >= 0) { // TODO Ariel TOP I need some kind of += for curr and next
             z_next[Y[d]*n + s] += W[Y[d]*n + d] * 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
@@ -124,8 +125,8 @@ struct PR_Vertex_Reset {
 
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
-//    const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
-    int k = 3;
+    const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
+//    int k = 3;
 
     const intE n = GA.n;
     // Run for nr. of edges
@@ -142,18 +143,21 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     { parallel_for (long i = 0; i < n; i++) frontier[i] = 1; }
 
     int *Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
-//    { parallel_for (long i = 0; i < n*k; i++) Y[i] = 0; } // Fill with 0-s
-//    Y[3] = 1;
-//    Y[4] = 1; // Same as GEE.py easy 5x5 case
+    { parallel_for (long i = 0; i < n; i++) Y[i] = 0; } // Fill with 0-s
+    Y[3] = 1;
+    Y[4] = 1; // Same as GEE.py easy 5x5 case
 
-    cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
-    double a;
-    std::ifstream infile("../inputs/Y-facebook-5percent.txt");
-    int i = 0;
-    while (infile >> a) {
-        Y[i] = (int)a;
-        i++;
-    }
+//    cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
+//    double a;
+//    std::ifstream infile("../inputs/Y-facebook-5percent.txt");
+//    int i = 0;
+//    if (infile.is_open()) {
+//        while (infile >> setw(a)) {
+//            Y[i] = (int) a;
+//            i++;
+//            if (i == n) { break; }
+//        }
+//    }
 
 //#nk: 1*n array, contains the number of observations in each class
 //#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
@@ -197,17 +201,12 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         }
 
         cout << "\niter: " << iter << "\n\n";
-//        cout << "\n p_curr: \t";
-//        for (int i = 0; i < n*k; i++) {
-////        if (i % n == 0) { cout<<"\n"; }
-//            cout << p_curr1[i] << "\t";
-//        }
 
-        cout << "\n p_next: \t";
-        for (int i = 0; i < n*k; i++) {
-            if (i % n == 0) { cout<<"\n"; }
-            cout << p_next1[i] << "\t";
-        }
+//        cout << "\n p_next: \t";
+//        for (int i = 0; i < n*k; i++) {
+//            if (i % n == 0) { cout<<"\n"; }
+//            cout << p_next1[i] << "\t";
+//        }
 
         vertexMap(Frontier, PR_Vertex_Reset(p_curr1)); // Reset Values
 //        vertexMap(Frontier, PR_Vertex_Reset(p_curr2));
