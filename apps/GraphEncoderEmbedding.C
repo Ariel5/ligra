@@ -155,6 +155,10 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
         double a;
         std::ifstream infile("../inputs/Y-facebook-5percent.txt");
+        if (infile.fail()) {
+            cout << "\n\nSpecified Y file does not exist\n\n";
+            exit(-1);
+        }
         int i = 0;
         if (infile.is_open()) {
             while (infile >> setw(a)) {
@@ -165,7 +169,21 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         }
     }
     else if (graphName == "LiveJournal") {
-
+        cout << "Reading Y-LiveJournal-5percent.txt generated in GEE.py case10 semi-supervised";
+        double a;
+        std::ifstream infile("../../GraphEmd/Data/liveJournalY.txt");
+        int i = 0;
+        if (infile.fail()) {
+            cout << "\n\nSpecified Y file does not exist\n\n";
+            exit(-1);
+        }
+        if (infile.is_open()) {
+            while (infile >> setw(a)) {
+                Y[i] = (int) a;
+                i++;
+                if (i == n) { break; }
+            }
+        }
     }
     else {
         cout << "Wrong input graph name. Inputs are case sensitive. Possible inputs: Easy, Facebook, LiveJournal\n\n";
