@@ -68,6 +68,7 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 //        s = temp;
 //        cout << d << " " << s << "\n";
 
+        // Ariel I believe -1 or negative label means don't know - ignored
         if (Y[d] >= 0) { // TODO Ariel TOP I need some kind of += for curr and next
             z_next[Y[d]*n + s] += W[Y[d]*n + d] * 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
         }
@@ -153,7 +154,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     }
     else if (graphName == "Facebook") {
         cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
-        double a;
+        string a;
         std::ifstream infile("../inputs/Y-facebook-5percent.txt");
         if (infile.fail()) {
             cout << "\n\nSpecified Y file does not exist\n\n";
@@ -161,10 +162,10 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         }
         int i = 0;
         if (infile.is_open()) {
-            while (infile >> setw(a)) {
-                Y[i] = (int) a;
+            while (std::getline(infile, a)) {
+                Y[i] = std::stoi(a);
                 i++;
-                if (i == n) { break; }
+//                if (i == n) { break; }
             }
         }
     }
@@ -240,9 +241,9 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 //            cout << p_next1[i] << "\t";
 //        }
 
-        vertexMap(Frontier, PR_Vertex_Reset(p_curr1)); // Reset Values
+//        vertexMap(Frontier, PR_Vertex_Reset(p_curr1)); // Reset Values
 //        vertexMap(Frontier, PR_Vertex_Reset(p_curr2));
-        swap(p_curr1, p_next1);
+//        swap(p_curr1, p_next1);
 //        swap(p_curr2, p_next2);
     }
 //    cout << "Current Embedding values (Z-projection): " << *p_curr;
