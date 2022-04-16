@@ -53,8 +53,8 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 //            : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
 //            z_curr1(_z_curr1), z_next1(_z_next1), z_curr2(_z_curr2), z_next2(_z_next2), Y(_Y), W(_W), V(_V) {}
 
-    double *W;
-    PR_F(double *_z_curr, double *_z_next, const int _n, int *_Y, double *_W, vertex *_V)
+    float *W;
+    PR_F(double *_z_curr, double *_z_next, const int _n, int *_Y, float *_W, vertex *_V)
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
             z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V) {}
 
@@ -186,6 +186,23 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
             }
         }
     }
+    else if (graphName == "Twitch") {
+        cout << "Reading Twitch Y";
+        string a;
+        std::ifstream infile("../../../Downloads/Y-zeros-Twitch.txt");
+        int i = 0;
+        if (infile.fail()) {
+            cout << "\n\nSpecified Y file does not exist\n\n";
+            exit(-1);
+        }
+        if (infile.is_open()) {
+            while (std::getline(infile, a)) {
+                Y[i] = std::stoi(a);
+                i++;
+//                if (i == n) { break; }
+            }
+        }
+    }
     else {
         cout << "Wrong input graph name. Inputs are case sensitive. Possible inputs: Easy, Facebook, LiveJournal\n\n";
         exit(-1);
@@ -211,7 +228,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
     vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
 
-    double *W = newA(double, n*k+1); // W seems ok too, not confirmed tho
+    float *W = newA(float, n*k+1); // W seems ok too, not confirmed tho
     { parallel_for (long i = 0; i < n*k; i++) W[i] = 0; }
     W[n*k] = NAN;
 
@@ -259,7 +276,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
 //    int debug_placeholder = 5;
 
-    print_to_file(p_next1, "../inputs/Z_LiveJournal.txt", n, k);
+    print_to_file(p_next1, "../inputs/Z_output.txt", n, k);
     cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
     cout << "Peak Residual Set Size (RAM usage): " << (float) getPeakRSS() / (1024*1024) << " MB\n\n";
 
