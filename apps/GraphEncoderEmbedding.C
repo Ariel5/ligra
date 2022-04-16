@@ -66,7 +66,7 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 //        uintE temp = d;
 //        d = s;
 //        s = temp;
-        cout << d << " " << s << "\n";
+//        cout << d << " " << s << "\n";
 
         if (Y[d] >= 0) { // TODO Ariel TOP I need some kind of += for curr and next
             z_next[Y[d]*n + s] += W[Y[d]*n + d] * 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
@@ -170,7 +170,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     }
     else if (graphName == "LiveJournal") {
         cout << "Reading Y-LiveJournal-5percent.txt generated in GEE.py case10 semi-supervised";
-        double a;
+        string a;
         std::ifstream infile("../../GraphEmd/Data/liveJournalY.txt");
         int i = 0;
         if (infile.fail()) {
@@ -178,10 +178,10 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
             exit(-1);
         }
         if (infile.is_open()) {
-            while (infile >> setw(a)) {
-                Y[i] = (int) a;
+            while (std::getline(infile, a)) {
+                Y[i] = std::stoi(a);
                 i++;
-                if (i == n) { break; }
+//                if (i == n) { break; }
             }
         }
     }
@@ -258,7 +258,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 
 //    int debug_placeholder = 5;
 
-//    print_to_file(p_next1, "../inputs/Z_facebook.txt", n, k);
+    print_to_file(p_next1, "../inputs/Z_LiveJournal.txt", n, k);
     cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
     cout << "Peak Residual Set Size (RAM usage): " << (float) getPeakRSS() / (1024*1024) << " MB\n\n";
 
