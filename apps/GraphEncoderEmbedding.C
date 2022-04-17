@@ -189,7 +189,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     else if (graphName == "Twitch") {
         cout << "Reading Twitch Y";
         string a;
-        std::ifstream infile("../../../Downloads/Y-zeros-Twitch.txt");
+        std::ifstream infile("../../../Downloads/twitchFullY-20-removed.txt");
         int i = 0;
         if (infile.fail()) {
             cout << "\n\nSpecified Y file does not exist\n\n";
@@ -199,7 +199,22 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
             while (std::getline(infile, a)) {
                 Y[i] = std::stoi(a);
                 i++;
-//                if (i == n) { break; }
+            }
+        }
+    }
+    else if (graphName == "Pokec") {
+        cout << "Reading Pokec Y";
+        string a;
+        std::ifstream infile("../../../Downloads/pokec-Y50-sparse.txt");
+        int i = 0;
+        if (infile.fail()) {
+            cout << "\n\nSpecified Y file does not exist\n\n";
+            exit(-1);
+        }
+        if (infile.is_open()) {
+            while (std::getline(infile, a)) {
+                Y[i] = std::stoi(a);
+                i++;
             }
         }
     }
