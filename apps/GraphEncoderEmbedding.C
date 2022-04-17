@@ -25,7 +25,7 @@
 #include "ligra.h"
 #include "math.h"
 
-void print_to_file(const double* Z, string file_name, const int n, const int k);
+void print_to_file(const float* Z, string file_name, const int n, const int k);
 size_t getCurrentRSS();
 size_t getPeakRSS();
 
@@ -34,7 +34,8 @@ size_t getPeakRSS();
 // Ariel - PRUpdate(s,d) in paper
 template<class vertex>
 struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
-    double *z_curr, *z_next; // Ariel - these are already vectors! No need to worry about assigning them
+    double *z_curr;
+    float *z_next; // Ariel - these are already vectors! No need to worry about assigning them
 //    double *z_curr2, *z_next2; // TODO Ariel make matrix later. C++ pointers are fighting me. Now: check correctness
     int *Y; // Supervised labels for each vertex. More fitting as memeber of Vertex class but whatever
     vertex *V;
@@ -54,7 +55,7 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 //            z_curr1(_z_curr1), z_next1(_z_next1), z_curr2(_z_curr2), z_next2(_z_next2), Y(_Y), W(_W), V(_V) {}
 
     float *W;
-    PR_F(double *_z_curr, double *_z_next, const int _n, int *_Y, float *_W, vertex *_V)
+    PR_F(double *_z_curr, float *_z_next, const int _n, int *_Y, float *_W, vertex *_V)
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
             z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V) {}
 
@@ -135,10 +136,10 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     const long maxIters = P.getOptionLongValue("-maxiters", 1);
     const int divideBy2 = P.getOptionLongValue("-divide", 1);
 
-    double *p_curr1 = newA(double, n*k+1);
-    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
-    p_curr1[n*k] = NAN;
-    double *p_next1 = newA(double, n*k+1);
+    double *p_curr1 = newA(double, 1);
+//    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
+//    p_curr1[n*k] = NAN;
+    float *p_next1 = newA(float, n*k+1);
     { parallel_for (long i = 0; i < n*k; i++) p_next1[i] = 0; } //0 if unchanged
     p_next1[n*k] = NAN;
     bool *frontier = newA(bool, n); // Frontier should be whole graph's edges
@@ -172,7 +173,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     else if (graphName == "LiveJournal") {
         cout << "Reading Y-LiveJournal-5percent.txt generated in GEE.py case10 semi-supervised";
         string a;
-        std::ifstream infile("../../GraphEmd/Data/liveJournalY.txt");
+        std::ifstream infile("../../../Downloads/liveJournal-Y50-sparse.txt");
         int i = 0;
         if (infile.fail()) {
             cout << "\n\nSpecified Y file does not exist\n\n";
@@ -265,7 +266,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
             } // TODO lol fix this. Ligra assumes undirected? goes over all edges twice
         }
 
-        cout << "\niter: " << iter << "\n\n";
+//        cout << "\niter: " << iter << "\n\n";
 
 //        cout << "\n p_next: \t";
 //        for (int i = 0; i < n*k; i++) {
@@ -287,7 +288,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 //        cout << p_curr1[i] << "\n";
 //    }
 
-    cout << "\n\n\n--------------Finished one whole run----------\n\n\n";
+//    cout << "\n\n\n--------------Finished one whole run----------\n\n\n";
 
 //    int debug_placeholder = 5;
 
@@ -302,7 +303,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     free(Y);
 }
 
-void print_to_file(const double* Z, string file_name, const int n, const int k) {
+void print_to_file(const float* Z, string file_name, const int n, const int k) {
     cout << "Saving Z to " << file_name << "\n";
     std::ofstream outfile(file_name);
     if (outfile.is_open()) {
