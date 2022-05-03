@@ -171,9 +171,9 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         }
     }
     else if (graphName == "LiveJournal") {
-        cout << "Reading Y-LiveJournal-5percent.txt generated in GEE.py case10 semi-supervised";
+        cout << "Reading liveJournal-Y50-sparse generated in GEE.py case10 semi-supervised";
         string a;
-        std::ifstream infile("../../../Downloads/liveJournal-Y50-sparse.txt");
+        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/liveJournal-Y50-sparse.txt");
         int i = 0;
         if (infile.fail()) {
             cout << "\n\nSpecified Y file does not exist\n\n";
@@ -223,6 +223,22 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         cout << "Reading Orkut Y. Divide should be 1 for this graph";
         string a;
         std::ifstream infile("../../../Downloads/orkut-Y50-sparse.txt");
+        int i = 0;
+        if (infile.fail()) {
+            cout << "\n\nSpecified Y file does not exist\n\n";
+            exit(-1);
+        }
+        if (infile.is_open()) {
+            while (std::getline(infile, a)) {
+                Y[i] = std::stoi(a);
+                i++;
+            }
+        }
+    }
+    else if (graphName == "OrkutGroups") {
+        cout << "Reading Orkut-Groups Y. Divide should be ? for this graph";
+        string a;
+        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/orkut-groups-Y40-sparse.txt");
         int i = 0;
         if (infile.fail()) {
             cout << "\n\nSpecified Y file does not exist\n\n";
@@ -309,8 +325,8 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 //    int debug_placeholder = 5;
 
 //    print_to_file(p_next1, "../inputs/Z_output.txt", n, k);
-//    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
-//    cout << "Peak Residual Set Size (RAM usage): " << (float) getPeakRSS() / (1024*1024) << " MB\n\n";
+    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
+    cout << "Peak Residual Set Size (RAM usage): " << (float) getPeakRSS() / (1024*1024) << " MB\n\n";
 
     Frontier.del();
     free(p_curr1);
