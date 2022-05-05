@@ -190,7 +190,8 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
                 }
             }
         } else {
-            { parallel_for (long i = 0; i < n; i++) Y[i] = i % k; }
+            cout << "Generating Y at random";
+            { parallel_for (long i = 0; i < n; i++) Y[i] = 3; }
         }
     }
     else if (graphName == "Twitch") {
