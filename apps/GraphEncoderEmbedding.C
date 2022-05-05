@@ -24,6 +24,7 @@
 #include <vector>
 #include "ligra.h"
 #include "math.h"
+#include <chrono>
 
 void print_to_file(const float* Z, string file_name, const int n, const int k);
 size_t getCurrentRSS();
@@ -129,6 +130,7 @@ template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
     const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
     const string graphName = P.getOptionValue("-graphName", "Facebook");
+    const int randomY = P.getOptionIntValue("-randomY", 0);
 //    int k = 3;
 
     const intE n = GA.n;
@@ -171,20 +173,24 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         }
     }
     else if (graphName == "LiveJournal") {
-        cout << "Reading liveJournal-Y50-sparse generated in GEE.py case10 semi-supervised";
-        string a;
-        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/liveJournal-Y50-sparse.txt");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-//                if (i == n) { break; }
+        if (randomY == 0) {
+            cout << "Reading liveJournal-Y50-sparse generated in GEE.py case10 semi-supervised";
+            string a;
+            std::ifstream infile("../../../Downloads/Thesis-Graph-Data/liveJournal-Y50-sparse.txt");
+            int i = 0;
+            if (infile.fail()) {
+                cout << "\n\nSpecified Y file does not exist\n\n";
+                exit(-1);
             }
+            if (infile.is_open()) {
+                while (std::getline(infile, a)) {
+                    Y[i] = std::stoi(a);
+                    i++;
+//                if (i == n) { break; }
+                }
+            }
+        } else {
+            { parallel_for (long i = 0; i < n; i++) Y[i] = i % k; }
         }
     }
     else if (graphName == "Twitch") {
@@ -218,6 +224,10 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
                 i++;
             }
         }
+//        if chrono::system_clock::now() % 10 <=8 {
+//            Y[i] = -1;
+//        }
+//        Y[i] = std::chrono::system_clock::now() % 50;
     }
     else if (graphName == "Orkut") {
         cout << "Reading Orkut Y. Divide should be 1 for this graph";
