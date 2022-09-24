@@ -1,3 +1,12 @@
+Note: This is my implementation of [Graph Encoder Embedding](https://arxiv.org/abs/2109.13098) in the Ligra framework.
+======================
+**The implementation is in its own branch, called graphencoder-edgemap-linux**
+
+This speeds up the original implementation by 10-100x, making Graph Encoder Embedding a very useful tool for learning on Graphs. It also offers the versatility of weighted, directed, and Graph Laplacian embedding.
+
+Below is the original Ligra README
+
+
 Ligra: A Lightweight Graph Processing Framework for Shared Memory
 ======================
 
