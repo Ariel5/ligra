@@ -1,3 +1,7 @@
+OS := $(shell uname)
+
+$(info $$OS is $(OS)) # 'Darwin' for MacOS
+
 ifdef LONG
 INTT = -DLONG
 endif
@@ -36,7 +40,13 @@ else ifdef OPENMP
 PCC = g++
 PCFLAGS = -std=c++14 -fopenmp -march=native -O3 -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM)
 
+else ifeq ($(OS),Darwin)
+# Run MacOS commands
+# Aliasing g++ to /opt/llvm doesn't work in CLion
+PCC = /opt/homebrew/opt/llvm/bin/clang++
+PCFLAGS = -std=c++14 -march=native -O3 -fopenmp -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM)
 else
+# check for Linux and run other commands
 PCC = g++ # Add these for parallel run -fopenmp -DOPENMP. To Debug, add -g
 PCFLAGS = -std=c++14 -march=native -O3 -fopenmp -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM)
 endif
