@@ -29,6 +29,8 @@
 //the "-s" flag. For undirected graphs on SNAP, the "-s" flag must be
 //passed since each edge appears in only one direction
 
+// Note this only works for unsigned Integer weights
+
 #include "parseCommandLine.h"
 #include "graphIO.h"
 #include "parallel.h"

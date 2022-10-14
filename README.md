@@ -4,8 +4,9 @@ Note: This is my implementation of [Graph Encoder Embedding](https://arxiv.org/a
 This speeds up the original implementation by 10-100x, making Graph Encoder Embedding a very useful tool for learning on Graphs. It also offers the versatility of weighted, directed, and Graph Laplacian embedding.
 
 Branches give different functionality: **master** provides the unweighted version, and **weighted** predictably, the weighted one
-I cannot easily join these two together in one due to Ligra needing to use a flag *#define WEIGHTED=1* which makes it incompatible with 
-the unweighted version.
+I cannot easily join these two together in one due to Ligra needing to use a flag *#define WEIGHTED=1* which makes it incompatible with the unweighted version.
+
+Note: SNAP referred to by Ligra = the edgelist graph format (source, vertex, weight-optional)
 
 Below is the original Ligra README
 
