@@ -889,6 +889,43 @@ namespace benchIO {
     return wghEdgeArray<intT>(E, maxrc, maxrc, n);
   }
 
+    // Ariel addition 13-Oct-2022
+    // Ligra doesn't by default support non-integer edge weights
+    // This function should fix that
+    template <class intT>
+    wghEdgeArray<intT> readFloatWghSNAP(char* fname) {
+        _seq<char> S = readStringFromFile(fname);
+        char* S2 = newA(char,S.n);
+        //ignore starting lines with '#' and find where to start in file
+        long k=0;
+        while(1) {
+            if(S.A[k] == '#') {
+                while(S.A[k++] != '\n') continue;
+            }
+            if(k >= S.n || S.A[k] != '#') break;
+        }
+        parallel_for(long i=0;i<S.n-k;i++) S2[i] = S.A[k+i];
+        S.del();
+
+        words W = stringToWords(S2, S.n-k);
+        long n = W.m/3;
+        wghEdge<float> *E = newA(wghEdge<float>,n);
+        {parallel_for(long i=0; i < n; i++)
+                E[i] = wghEdge<intT>(atol(W.Strings[3*i]),
+                                     atol(W.Strings[3*i + 1]),
+                                     atol(W.Strings[3*i + 2]));}
+        W.del();
+
+        long maxR = 0;
+        long maxC = 0;
+        for (long i=0; i < n; i++) {
+            maxR = max<intT>(maxR, E[i].u);
+            maxC = max<intT>(maxC, E[i].v);
+        }
+        long maxrc = max<intT>(maxR,maxC) + 1;
+        return wghEdgeArray<intT>(E, maxrc, maxrc, n);
+    }
+
   //SNAP format
   template <class intT>
   hyperedgeArray<intT> readHyperedges(char* fname) {
