@@ -132,16 +132,18 @@ struct PR_Vertex_Reset {
 };
 
 
+// Run GEE
 template<class vertex>
-void Compute(graph<vertex> &GA, commandLine P) { // Run GEE
+void Compute(graph<vertex> &GA, commandLine P) {
     const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
     const string graphName = P.getOptionValue("-graphName", "Facebook");
     const int randomY = P.getOptionIntValue("-randomY", 0);
+//    const bool laplacian = P.getOptionLongValue("-Laplacian", false);
+
+//    if (laplacian)
+//        auto G = getLaplacianWghGraph(&GA);
 
     const intE n = GA.n;
-// Run for nr. of edges
-    const long maxIters = P.getOptionLongValue("-maxiters", 1);
-    const int divideBy2 = P.getOptionLongValue("-divide", 1);
 
     double *p_curr1 = newA(double, 1);
 //    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
@@ -265,12 +267,10 @@ void Compute(graph<vertex> &GA, commandLine P) { // Run GEE
         exit(-1);
     }
 
-//    cout <<
-//#nk: 1*n array, contains the number of observations in each class
-//#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
+// nk: 1*n array, contains the number of observations in each class
+// W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
 
 // Not doing possibility_detected
-//    int nk[2] = {3,2};
     int nk[k]; // Confirmed correct Facebook graph
 // TODO Ariel implement count_nonzero later. Should return nk = {3,2}
     for (int i = 0; i < k; i++) {
@@ -283,22 +283,22 @@ void Compute(graph<vertex> &GA, commandLine P) { // Run GEE
         nk[i] = nonzeroYCount;
     }
 
-    vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
+    vertexSubset Frontier(n, n, frontier);
 
-    float *W = newA(float, n * k + 1); // W seems ok too, not confirmed tho
+    float *W = newA(float, n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) W[i] = 0; }
     W[n * k] = NAN;
 
-    for (int i = 0; i < n; i++) { // For i in range(Y.shape[0])
+    for (int i = 0; i < n; i++) { // For i in range(Y.shape[0]) in GEE.py
         int k_i = Y[i]; // TODO LOW Using 1D Y
         if (k_i >= 0)
             W[k_i * n + i] = 1.0 / nk[k_i];
     }
 // So far, W is good
 
-// TODO TOP Each vertex has (kxn) Z-matrix?
-    long iter = 0;
-    while (iter++ < maxIters) {
+// Each vertex has (kx1) Z-matrix
+//    long iter = 0;
+//    while (iter++ < maxIters) { // TODO why is this here? We do only 1 iter
         edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
 
         if (divideBy2 != 0) {
@@ -319,16 +319,13 @@ void Compute(graph<vertex> &GA, commandLine P) { // Run GEE
 //        vertexMap(Frontier, PR_Vertex_Reset(p_curr2));
 //        swap(p_curr1, p_next1);
 //        swap(p_curr2, p_next2);
-    }
-//    cout << "Current Embedding values (Z-projection): " << *p_curr;
-//    cout << "W: "<<W;
+//    }
 
 // Print p_curr
 //    for (int i = 0; i < n*k; i++) {
 ////        if (i % n == 0) { cout<<"\n"; }
 //        cout << p_curr1[i] << "\n";
 //    }
-
 //    cout << "\n\n\n--------------Finished one whole run----------\n\n\n";
 
 // Use this to print output to file to test correctness
