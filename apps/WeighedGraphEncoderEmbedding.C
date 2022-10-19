@@ -33,8 +33,11 @@
 #include "ligra.h"
 #include <cmath>
 #include <chrono>
+#include "graphIO.h"
 
 void print_to_file(const float *Z, string file_name, const int n, const int k);
+template <class vertex>
+wghEdgeArray<intT> laplacianGraph(graph<vertex>& GA, int n, long m);
 
 size_t getCurrentRSS();
 
@@ -141,10 +144,13 @@ void Compute(graph<vertex> &GA, commandLine P) {
     const string Y_LOCATION = P.getOptionValue("-yLocation", "None");
     // For benchmark purposes. to avoid loading Y time. Actually not much faster
 //    const int randomY = P.getOptionIntValue("-randomY", 0);
-//    const bool laplacian = P.getOptionLongValue("-Laplacian", false);
+    const bool laplacian = P.getOptionLongValue("-Laplacian", false);
 
-//    if (laplacian)
-//        auto G = getLaplacianWghGraph(&GA);
+    if (laplacian) {
+        // L - the laplacian graph: an edgelist with weights corresponding to D^{-0.5} A D^{-0.5}
+        //  See Graph Encoder Embedding paper for more information
+        wghEdgeArray<intT> L = laplacianGraph(GA, GA.n, GA.m);
+    }
 
     const intE n = GA.n;
 
@@ -226,6 +232,20 @@ void Compute(graph<vertex> &GA, commandLine P) {
     free(W);
     free(Y);
 }
+
+template <class vertex>
+wghEdgeArray<intT> laplacianGraph(graph<vertex>& GA, int n, long m) {
+    // m: nr. edges
+    wghEdge<intT> *E = newA(wghEdge<intT>, m);
+    {parallel_for(long i=0; i < m; i++)
+            // atol converts char to long
+            E[i] = wghEdge<intT>(GA.n, // source
+                                 GA.n, // destination
+                                 GA.n);} // weight
+
+    return wghEdgeArray<intT>(E, n, n, m);
+}
+
 
 // n - nr. vertices. k - nr. classes
 void print_to_file(const float *Z, string file_name, const int n, const int k) {
