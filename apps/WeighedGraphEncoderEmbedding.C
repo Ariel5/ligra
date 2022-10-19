@@ -31,7 +31,7 @@
 
 #include <vector>
 #include "ligra.h"
-#include "math.h"
+#include <cmath>
 #include <chrono>
 
 void print_to_file(const float *Z, string file_name, const int n, const int k);
@@ -137,7 +137,10 @@ template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) {
     const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
     const string graphName = P.getOptionValue("-graphName", "Facebook");
-    const int randomY = P.getOptionIntValue("-randomY", 0);
+    // Embedding semi-supervised labels
+    const string Y_LOCATION = P.getOptionValue("-yLocation", "None");
+    // For benchmark purposes. to avoid loading Y time. Actually not much faster
+//    const int randomY = P.getOptionIntValue("-randomY", 0);
 //    const bool laplacian = P.getOptionLongValue("-Laplacian", false);
 
 //    if (laplacian)
@@ -156,17 +159,12 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     int *Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
 
-    if (graphName == "Easy") {
-        cout << "Easy graph\n";
-        { parallel_for (long i = 0; i < n; i++) Y[i] = 0; } // Fill with 0-s
-        Y[3] = 1;
-        Y[4] = 1; // Same as GEE.py easy 5x5 case
-    } else if (graphName == "Facebook") {
-        cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
+    if (Y_LOCATION != "None") {
+        cout << "Loading specified Y file at " + Y_LOCATION;
         string a;
-        std::ifstream infile("../../Thesis-Graph-Data/Y-facebook-5percent.txt");
+        std::ifstream infile(Y_LOCATION);
         if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
+            cout << "\n\nSpecified Y file does not exist or cannot be loaded\n\n";
             exit(-1);
         }
         int i = 0;
@@ -177,100 +175,12 @@ void Compute(graph<vertex> &GA, commandLine P) {
 //                if (i == n) { break; }
             }
         }
-    } else if (graphName == "LiveJournal") {
-        if (randomY == 0) {
-            cout << "Reading liveJournal-Y50-sparse generated in GEE.py case10 semi-supervised";
-            string a;
-            std::ifstream infile("../../Thesis-Graph-Data/liveJournal-Y50-sparse.txt");
-            int i = 0;
-            if (infile.fail()) {
-                cout << "\n\nSpecified Y file does not exist\n\n";
-                exit(-1);
-            }
-            if (infile.is_open()) {
-                while (std::getline(infile, a)) {
-                    Y[i] = std::stoi(a);
-                    i++;
-//                if (i == n) { break; }
-                }
-            }
-        } else {
-            cout << "Generating Y at random";
-            { parallel_for (long i = 0; i < n; i++) Y[i] = 3; }
-        }
-    } else if (graphName == "Twitch") {
-        cout << "Reading Twitch Y";
-        string a;
-        std::ifstream infile("../../Thesis-Graph-Data/twitch-Y20-sparse.csv");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-            }
-        }
-    } else if (graphName == "Pokec") {
-        cout << "Reading Pokec Y";
-        string a;
-        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/pokec-Y50-sparse.txt");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-            }
-        }
-//        if chrono::system_clock::now() % 10 <=8 {
-//            Y[i] = -1;
-//        }
-//        Y[i] = std::chrono::system_clock::now() % 50;
-    } else if (graphName == "Orkut") {
-        cout << "Reading Orkut Y. Divide should be 1 for this graph";
-        string a;
-        std::ifstream infile("../../Thesis-Graph-Data/orkut-Y50-sparse.txt");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-            }
-        }
-    } else if (graphName == "OrkutGroups") {
-        cout << "Reading Orkut-Groups Y. Divide should be ? for this graph";
-        string a;
-        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/orkut-groups-Y40-sparse.txt");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-            }
-        }
-    } else {
-        cout << "Wrong input graph name. Inputs are case sensitive. Possible inputs: Easy, Facebook, LiveJournal\n\n";
-        exit(-1);
     }
 
 // nk: 1*n array, contains the number of observations in each class
 // W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
 
-// Not doing possibility_detected
+// Not doing possibility_detected from GEE.py
     int nk[k]; // Confirmed correct Facebook graph
 // TODO Ariel implement count_nonzero later. Should return nk = {3,2}
     for (int i = 0; i < k; i++) {
@@ -299,34 +209,9 @@ void Compute(graph<vertex> &GA, commandLine P) {
 // Each vertex has (kx1) Z-matrix
 //    long iter = 0;
 //    while (iter++ < maxIters) { // TODO why is this here? We do only 1 iter
-        edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
+    edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
 
-        if (divideBy2 != 0) {
-            {
-                parallel_for (long i = 0; i < n * k; i++) p_next1[i] /= 2;
-            } // TODO lol fix this. Ligra assumes undirected? goes over all edges twice
-        }
 
-//        cout << "\niter: " << iter << "\n\n";
-
-//        cout << "\n p_next: \t";
-//        for (int i = 0; i < n*k; i++) {
-//            if (i % n == 0) { cout<<"\n"; }
-//            cout << p_next1[i] << "\t";
-//        }
-
-//        vertexMap(Frontier, PR_Vertex_Reset(p_curr1)); // Reset Values
-//        vertexMap(Frontier, PR_Vertex_Reset(p_curr2));
-//        swap(p_curr1, p_next1);
-//        swap(p_curr2, p_next2);
-//    }
-
-// Print p_curr
-//    for (int i = 0; i < n*k; i++) {
-////        if (i % n == 0) { cout<<"\n"; }
-//        cout << p_curr1[i] << "\n";
-//    }
-//    cout << "\n\n\n--------------Finished one whole run----------\n\n\n";
 
 // Use this to print output to file to test correctness
     print_to_file(p_next1, "./testing/outputs_to_compare/Ligra_outputs/Z_output.csv", n, k);
