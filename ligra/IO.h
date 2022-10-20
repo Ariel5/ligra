@@ -216,8 +216,8 @@ graph<vertex> readGraphFromFile(char *fname, bool isSymmetric, bool mmap, bool l
         abort();
     }
 
-    uintT *offsets = newA(uintT,
-                          n); // Determines mapping of source vertices to dest. bcs. edges only holds dest (and weight)
+    // Determines mapping of source vertices to dest. bcs. edges only holds dest (and weight)
+    uintT *offsets = newA(uintT, n);
 #ifndef WEIGHTED
     uintE *edges = newA(uintE, m);
 #else
@@ -272,7 +272,6 @@ graph<vertex> readGraphFromFile(char *fname, bool isSymmetric, bool mmap, bool l
                 }
             }
         }
-        free(offsets);
 
 #ifndef WEIGHTED
 #ifndef LOWMEM
@@ -332,20 +331,38 @@ graph<vertex> readGraphFromFile(char *fname, bool isSymmetric, bool mmap, bool l
             }
         }
 
+
+        // Calculate node degrees the way Graph Encoder Embedding does it
+        float *GEEDegrees = newA(float, n);
+        { parallel_for (long i = 0; i < n; i++) GEEDegrees[i] = 0; } // Init to 0
+
         // TODO Ariel do this for symmetric graphs too
         // TODO TOP CAREFUL!! IN PARALLEL_FOR, NOT GUARANTEED THAT V[I].INDEGREE IS SET
         // THIS MAY HAVE TO STAY SERIAL
         {
-            parallel_for (long i = 0; i < m; i++) {
-#ifndef WEIGHTED
-                edges[i] = edges[i]; // useless on purpose
-#else
-//                edges[2*i] = atol(W.Strings[i+n+3]);
-        edges[2*i+1] *= 1/sqrt(v[i].getInDegree()) * 1/sqrt(v[2*i].getInDegree()); // Laplacian weight from GEE
-#endif
+//            parallel_for (long i = 0; i < m; i++) {
+            // This is actually O(m) due to the inner loop
+            for (long i = 0; i < n - 1; i++) {
+            #ifndef WEIGHTED
+                edges[i] = edges[i]; // useless on purpose TODO think about this later & Fix Unweighted
+            #else
+                const long edges_start = offsets[i]; // Offset contains the mapping of which edges start from which vertex
+                const long edges_end = offsets[i+1]; // This includes 2x for weighted (since edges are stored (d,w))
+
+                // TODO parallelize
+                for (long c = 0; c < edges_end - edges_start; c++) {
+                    // edges[2c] - Destination vertex starting from current vertex
+                    GEEDegrees[i] += edges[2*c+1]; // edges[2c+1] - edge weight
+
+                    if (i != edges[2*c]) // If not self-edge
+                        GEEDegrees[edges[2*c]] += edges[2*c+1];
+                }
+                // *= 1/sqrt(v[i].getInDegree()) * 1/sqrt(v[2*i].getInDegree()); // Laplacian weight from GEE
+            #endif
             }
         }
 
+        free(offsets);
         free(tOffsets);
         Uncompressed_Mem<vertex> *mem = new Uncompressed_Mem<vertex>(v, n, m, edges, inEdges);
         return graph<vertex>(v, n, m, mem);
