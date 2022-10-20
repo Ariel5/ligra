@@ -66,10 +66,10 @@ hyperedgeArray(edge<intT>* _VE, edge<intT>* _HE, long _nv, long _nh, long _mv, l
 
 template <class intT>
 struct wghEdge {
-  intT u;
+  intT u; // This templating doesnt make sense. U,V are always integers. Only w can possibly be float
   intT v;
-  intT w;
-wghEdge(intT f, intT s, intT t) : u(f), v(s), w(t) {}
+  float w;
+wghEdge(intT f, intT s, float t) : u(f), v(s), w(t) {}
 };
 
 template <class intT>
@@ -82,6 +82,18 @@ struct wghEdgeArray {
   wghEdgeArray(wghEdge<intT> *EE, intT r, intT c, intT nz) :
     E(EE), numRows(r), numCols(c), nonZeros(nz) {}
   wghEdgeArray() {}
+};
+
+template <class intT>
+struct floatWghEdgeArray {
+    wghEdge<intT>* E;
+    intT numRows;
+    intT numCols;
+    intT nonZeros;
+    void del() {free(E);}
+    floatWghEdgeArray(wghEdge<intT> *EE, intT r, intT c, intT nz) :
+            E(EE), numRows(r), numCols(c), nonZeros(nz) {}
+    floatWghEdgeArray() {}
 };
 
 template <class intT>
@@ -871,22 +883,23 @@ namespace benchIO {
     S.del();
 
     words W = stringToWords(S2, S.n-k);
-    long n = W.m/3;
-    wghEdge<intT> *E = newA(wghEdge<intT>,n);
-    {parallel_for(long i=0; i < n; i++)
-      E[i] = wghEdge<intT>(atol(W.Strings[3*i]), 
-			atol(W.Strings[3*i + 1]),
-			atol(W.Strings[3*i + 2]));}
+    long m = W.m / 3; // Ariel: nr. edges, contrary to uses of n meaning vertices elsewhere
+    wghEdge<intT> *E = newA(wghEdge<intT>, m);
+    {parallel_for(long i=0; i < m; i++)
+    // atol converts char to long
+      E[i] = wghEdge<intT>(atol(W.Strings[3*i]), // source
+			atol(W.Strings[3*i + 1]), // destination
+			atof(W.Strings[3*i + 2]));} // weight
     W.del();
 
     long maxR = 0;
     long maxC = 0;
-    for (long i=0; i < n; i++) {
+    for (long i=0; i < m; i++) {
       maxR = max<intT>(maxR, E[i].u);
       maxC = max<intT>(maxC, E[i].v);
     }
-    long maxrc = max<intT>(maxR,maxC) + 1;
-    return wghEdgeArray<intT>(E, maxrc, maxrc, n);
+    long maxrc = max<intT>(maxR,maxC) + 1; // Counts nr. vertices I think
+    return wghEdgeArray<intT>(E, maxrc, maxrc, m);
   }
 
     // Ariel addition 13-Oct-2022

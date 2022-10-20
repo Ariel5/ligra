@@ -144,13 +144,14 @@ void Compute(graph<vertex> &GA, commandLine P) {
     const string Y_LOCATION = P.getOptionValue("-yLocation", "None");
     // For benchmark purposes. to avoid loading Y time. Actually not much faster
 //    const int randomY = P.getOptionIntValue("-randomY", 0);
-    const bool laplacian = P.getOptionLongValue("-Laplacian", false);
+    // TODO make this less ugly - use argc/argv
+    const string laplacian = P.getOptionValue("-Laplacian", "false");
 
-    if (laplacian) {
-        // L - the laplacian graph: an edgelist with weights corresponding to D^{-0.5} A D^{-0.5}
-        //  See Graph Encoder Embedding paper for more information
-        wghEdgeArray<intT> L = laplacianGraph(GA, GA.n, GA.m);
-    }
+//    if (laplacian == "true") {
+//        // L - the laplacian graph: an edgelist with weights corresponding to D^{-0.5} A D^{-0.5}
+//        //  See Graph Encoder Embedding paper for more information
+//        wghEdgeArray<intT> L = laplacianGraph(GA, GA.n, GA.m);
+//    }
 
     const intE n = GA.n;
 

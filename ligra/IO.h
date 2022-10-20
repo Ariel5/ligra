@@ -160,8 +160,9 @@ words stringToWords(char *Str, long n) {
   return words(Str,n,SA,m);
 }
 
+// Ariel 19-Oct-2022: I added the laplacian arguments to match GEE.py. GEE changes graph weights when calculating L
 template <class vertex>
-graph<vertex> readGraphFromFile(char* fname, bool isSymmetric, bool mmap) {
+graph<vertex> readGraphFromFile(char* fname, bool isSymmetric, bool mmap, bool laplacian) {
   words W;
   if (mmap) {
     _seq<char> S = mmapStringFromFile(fname);
@@ -205,7 +206,7 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric, bool mmap) {
 #ifndef WEIGHTED
   uintE* edges = newA(uintE,m);
 #else
-  intE* edges = newA(intE,2*m);
+  intE* edges = newA(intE,2*m); // One column for destination, the other for weights, all in 1 long vector
 #endif
 
   {parallel_for(long i=0; i < n; i++) offsets[i] = atol(W.Strings[i + 3]);}
@@ -277,10 +278,10 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric, bool mmap) {
 #endif
     {parallel_for(long i=1;i<m;i++) {
 #ifndef WEIGHTED
-      inEdges[i] = temp[i].second;
+      inEdges[i] = temp[i].second; // Ariel: Set only edge destination
 #else
-      inEdges[2*i] = temp[i].second.first;
-      inEdges[2*i+1] = temp[i].second.second;
+      inEdges[2*i] = temp[i].second.first; // Ariel: Set edge destination
+      inEdges[2*i+1] = temp[i].second.second; // Ariel: I believe set edge weight
 #endif
       if(temp[i].first != temp[i-1].first) {
 	tOffsets[temp[i].first] = i;
@@ -304,6 +305,19 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric, bool mmap) {
 #endif
       }}
 
+      // TODO Ariel do this for symmetric graphs too
+      {parallel_for(long i=1;i<m;i++) {
+#ifndef WEIGHTED
+              inEdges[i] = temp[i].second; // Ariel: Set only edge destination
+#else
+              inEdges[2*i] = temp[i].second.first; // Ariel: Set edge destination
+      inEdges[2*i+1] = temp[i].second.second; // Ariel: I believe set edge weight
+#endif
+              if(temp[i].first != temp[i-1].first) {
+                  tOffsets[temp[i].first] = i;
+              }
+          }}
+
     free(tOffsets);
     Uncompressed_Mem<vertex>* mem = new Uncompressed_Mem<vertex>(v,n,m,edges,inEdges);
     return graph<vertex>(v,n,m,mem);
@@ -311,6 +325,7 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric, bool mmap) {
   else {
     free(offsets);
     Uncompressed_Mem<vertex>* mem = new Uncompressed_Mem<vertex>(v,n,m,edges);
+
     return graph<vertex>(v,n,m,mem);
   }
 }
@@ -467,9 +482,9 @@ graph<vertex> readGraphFromBinary(char* iFile, bool isSymmetric) {
 }
 
 template <class vertex>
-graph<vertex> readGraph(char* iFile, bool compressed, bool symmetric, bool binary, bool mmap) {
+graph<vertex> readGraph(char* iFile, bool compressed, bool symmetric, bool binary, bool mmap, bool laplacian) {
   if(binary) return readGraphFromBinary<vertex>(iFile,symmetric);
-  else return readGraphFromFile<vertex>(iFile,symmetric,mmap);
+  else return readGraphFromFile<vertex>(iFile,symmetric,mmap, laplacian);
 }
 
 template <class vertex>

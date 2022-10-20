@@ -475,7 +475,8 @@ int parallel_main(int argc, char* argv[]) {
   bool symmetric = P.getOptionValue("-s");
   bool compressed = P.getOptionValue("-c");
   bool binary = P.getOptionValue("-b");
-  bool mmap = P.getOptionValue("-m");
+  bool laplacian = P.getOptionValue("-l");
+  bool mmap = P.getOptionValue("-m"); // What is this for?
   //cout << "mmap = " << mmap << endl;
   long rounds = P.getOptionLongValue("-rounds",3);
   if (compressed) {
@@ -516,7 +517,7 @@ int parallel_main(int argc, char* argv[]) {
     if (symmetric) {
 #ifndef HYPER
       graph<symmetricVertex> G =
-        readGraph<symmetricVertex>(iFile,compressed,symmetric,binary,mmap); //symmetric graph
+        readGraph<symmetricVertex>(iFile,compressed,symmetric,binary,mmap, laplacian); //symmetric graph
 #else
       hypergraph<symmetricVertex> G =
         readHypergraph<symmetricVertex>(iFile,compressed,symmetric,binary,mmap); //symmetric graph
@@ -531,7 +532,7 @@ int parallel_main(int argc, char* argv[]) {
     } else {
 #ifndef HYPER
       graph<asymmetricVertex> G =
-        readGraph<asymmetricVertex>(iFile,compressed,symmetric,binary,mmap); //asymmetric graph
+        readGraph<asymmetricVertex>(iFile,compressed,symmetric,binary,mmap, laplacian); //asymmetric graph
 #else
       hypergraph<asymmetricVertex> G =
         readHypergraph<asymmetricVertex>(iFile,compressed,symmetric,binary,mmap); //asymmetric graph
