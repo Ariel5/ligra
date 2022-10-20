@@ -1,6 +1,7 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 #include "vertexSubset.h"
+#include "cmath"
 using namespace std;
 
 namespace decode_uncompressed {
@@ -18,8 +19,8 @@ namespace decode_uncompressed {
         if (vertexSubset.isIn(ngh)) {
 #ifndef WEIGHTED
           auto m = f.update(ngh, v_id);
-#else
-          auto m = f.update(ngh, v_id, v->getInWeight(j));
+#else // Ariel changed weight to try getting Laplacian to work
+          auto m = f.update(ngh, v_id, 1/sqrt(v[ngh].getInDegree()) * 1/sqrt(v[v_id].getInDegree()) );
 #endif
           g(v_id, m);
         }

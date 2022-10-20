@@ -36,8 +36,6 @@
 #include "graphIO.h"
 
 void print_to_file(const float *Z, string file_name, const int n, const int k);
-template <class vertex>
-wghEdgeArray<intT> laplacianGraph(graph<vertex>& GA, int n, long m);
 
 size_t getCurrentRSS();
 
@@ -76,7 +74,7 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 
 
     // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
-    inline bool update(uintE s, uintE d, intE weight) {
+    inline bool update(uintE s, uintE d, float weight) {
         //update function applies PageRank equation
 
         // Ariel I believe -1 or negative label means don't know - ignored
@@ -232,19 +230,6 @@ void Compute(graph<vertex> &GA, commandLine P) {
     free(p_next1);
     free(W);
     free(Y);
-}
-
-template <class vertex>
-wghEdgeArray<intT> laplacianGraph(graph<vertex>& GA, int n, long m) {
-    // m: nr. edges
-    wghEdge<intT> *E = newA(wghEdge<intT>, m);
-    {parallel_for(long i=0; i < m; i++)
-            // atol converts char to long
-            E[i] = wghEdge<intT>(GA.n, // source
-                                 GA.n, // destination
-                                 GA.n);} // weight
-
-    return wghEdgeArray<intT>(E, n, n, m);
 }
 
 

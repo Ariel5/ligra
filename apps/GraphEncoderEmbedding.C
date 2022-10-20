@@ -127,40 +127,41 @@ struct PR_Vertex_Reset {
 
 
 template<class vertex>
-void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
+void Compute(graph<vertex> &GA, commandLine P) {
     const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
     const string graphName = P.getOptionValue("-graphName", "Facebook");
-    const int randomY = P.getOptionIntValue("-randomY", 0);
-//    int k = 3;
+    // Embedding semi-supervised labels
+    const string Y_LOCATION = P.getOptionValue("-yLocation", "None");
+    // For benchmark purposes. to avoid loading Y time. Actually not much faster
+//    const int randomY = P.getOptionIntValue("-randomY", 0);
+    // TODO make this less ugly - use argc/argv
+    const string laplacian = P.getOptionValue("-Laplacian", "false");
+
+//    if (laplacian == "true") {
+//        // L - the laplacian graph: an edgelist with weights corresponding to D^{-0.5} A D^{-0.5}
+//        //  See Graph Encoder Embedding paper for more information
+//        wghEdgeArray<intT> L = laplacianGraph(GA, GA.n, GA.m);
+//    }
 
     const intE n = GA.n;
-    // Run for nr. of edges
-    const long maxIters = P.getOptionLongValue("-maxiters", 1);
-    const int divideBy2 = P.getOptionLongValue("-divide", 1);
 
     double *p_curr1 = newA(double, 1);
 //    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
 //    p_curr1[n*k] = NAN;
-    float *p_next1 = newA(float, n*k+1);
-    { parallel_for (long i = 0; i < n*k; i++) p_next1[i] = 0; } //0 if unchanged
-    p_next1[n*k] = NAN;
+    float *p_next1 = newA(float, n * k + 1);
+    { parallel_for (long i = 0; i < n * k; i++) p_next1[i] = 0; } //0 if unchanged
+    p_next1[n * k] = NAN;
     bool *frontier = newA(bool, n); // Frontier should be whole graph's edges
     { parallel_for (long i = 0; i < n; i++) frontier[i] = 1; }
 
     int *Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
 
-    if (graphName == "Easy") {
-        cout << "Easy graph\n";
-        { parallel_for (long i = 0; i < n; i++) Y[i] = 0; } // Fill with 0-s
-        Y[3] = 1;
-        Y[4] = 1; // Same as GEE.py easy 5x5 case
-    }
-    else if (graphName == "Facebook") {
-        cout << "Reading Y-facebook-5percent.txt generated in GEE.py case10 semi-supervised";
+    if (Y_LOCATION != "None") {
+        cout << "Loading specified Y file at " + Y_LOCATION;
         string a;
-        std::ifstream infile("../inputs/Y-facebook-5percent.txt");
+        std::ifstream infile(Y_LOCATION);
         if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
+            cout << "\n\nSpecified Y file does not exist or cannot be loaded\n\n";
             exit(-1);
         }
         int i = 0;
@@ -172,111 +173,15 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
             }
         }
     }
-    else if (graphName == "LiveJournal") {
-        if (randomY == 0) {
-            cout << "Reading liveJournal-Y50-sparse generated in GEE.py case10 semi-supervised";
-            string a;
-            std::ifstream infile("../../../Downloads/Thesis-Graph-Data/liveJournal-Y50-sparse.txt");
-            int i = 0;
-            if (infile.fail()) {
-                cout << "\n\nSpecified Y file does not exist\n\n";
-                exit(-1);
-            }
-            if (infile.is_open()) {
-                while (std::getline(infile, a)) {
-                    Y[i] = std::stoi(a);
-                    i++;
-//                if (i == n) { break; }
-                }
-            }
-        } else {
-            cout << "Generating Y at random";
-            { parallel_for (long i = 0; i < n; i++) Y[i] = 3; }
-        }
-    }
-    else if (graphName == "Twitch") {
-        cout << "Reading Twitch Y";
-        string a;
-        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/twitchFullY-20-removed.txt");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-            }
-        }
-    }
-    else if (graphName == "Pokec") {
-        cout << "Reading Pokec Y";
-        string a;
-        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/pokec-Y50-sparse.txt");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-            }
-        }
-//        if chrono::system_clock::now() % 10 <=8 {
-//            Y[i] = -1;
-//        }
-//        Y[i] = std::chrono::system_clock::now() % 50;
-    }
-    else if (graphName == "Orkut") {
-        cout << "Reading Orkut Y. Divide should be 1 for this graph";
-        string a;
-        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/orkut-Y50-sparse.txt");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-            }
-        }
-    }
-    else if (graphName == "OrkutGroups") {
-        cout << "Reading Orkut-Groups Y. Divide should be ? for this graph";
-        string a;
-        std::ifstream infile("../../../Downloads/Thesis-Graph-Data/orkut-groups-Y40-sparse.txt");
-        int i = 0;
-        if (infile.fail()) {
-            cout << "\n\nSpecified Y file does not exist\n\n";
-            exit(-1);
-        }
-        if (infile.is_open()) {
-            while (std::getline(infile, a)) {
-                Y[i] = std::stoi(a);
-                i++;
-            }
-        }
-    }
-    else {
-        cout << "Wrong input graph name. Inputs are case sensitive. Possible inputs: Easy, Facebook, LiveJournal\n\n";
-        exit(-1);
-    }
 
-//    cout <<
-//#nk: 1*n array, contains the number of observations in each class
-//#W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
+// nk: 1*n array, contains the number of observations in each class
+// W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
 
-    // Not doing possibility_detected
-//    int nk[2] = {3,2};
+// Not doing possibility_detected from GEE.py
     int nk[k]; // Confirmed correct Facebook graph
-    // TODO Ariel implement count_nonzero later. Should return nk = {3,2}
+// TODO Ariel implement count_nonzero later. Should return nk = {3,2}
     for (int i = 0; i < k; i++) {
-        // TODO Ariel Why need count of indices nk?
+// TODO Ariel Why need count of indices nk?
         int nonzeroYCount = 0;
         for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
             if (Y[j] == i)
@@ -285,57 +190,30 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
         nk[i] = nonzeroYCount;
     }
 
-    vertexSubset Frontier(n, n, frontier); // TODO TOP What does this do?
+    vertexSubset Frontier(n, n, frontier);
 
-    float *W = newA(float, n*k+1); // W seems ok too, not confirmed tho
-    { parallel_for (long i = 0; i < n*k; i++) W[i] = 0; }
-    W[n*k] = NAN;
+    float *W = newA(float, n * k + 1);
+    { parallel_for (long i = 0; i < n * k; i++) W[i] = 0; }
+    W[n * k] = NAN;
 
-    for (int i = 0; i < n; i++) { // For i in range(Y.shape[0])
+    for (int i = 0; i < n; i++) { // For i in range(Y.shape[0]) in GEE.py
         int k_i = Y[i]; // TODO LOW Using 1D Y
         if (k_i >= 0)
-            W[k_i*n + i] = 1.0 / nk[k_i];
+            W[k_i * n + i] = 1.0 / nk[k_i];
     }
-    // So far, W is good
+// So far, W is good
 
-    // TODO TOP Each vertex has (kxn) Z-matrix?
-    long iter = 0;
-    while (iter++ < maxIters) {
-        edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
+// Each vertex has (kx1) Z-matrix
+//    long iter = 0;
+//    while (iter++ < maxIters) { // TODO why is this here? We do only 1 iter
+    edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
 
-        if (divideBy2 != 0) {
-            {
-                parallel_for (long i = 0; i < n * k; i++) p_next1[i] /= 2;
-            } // TODO lol fix this. Ligra assumes undirected? goes over all edges twice
-        }
 
-//        cout << "\niter: " << iter << "\n\n";
 
-//        cout << "\n p_next: \t";
-//        for (int i = 0; i < n*k; i++) {
-//            if (i % n == 0) { cout<<"\n"; }
-//            cout << p_next1[i] << "\t";
-//        }
+// Use this to print output to file to test correctness
+    print_to_file(p_next1, "./testing/outputs_to_compare/Ligra_outputs/Z_output.csv", n, k);
 
-//        vertexMap(Frontier, PR_Vertex_Reset(p_curr1)); // Reset Values
-//        vertexMap(Frontier, PR_Vertex_Reset(p_curr2));
-//        swap(p_curr1, p_next1);
-//        swap(p_curr2, p_next2);
-    }
-//    cout << "Current Embedding values (Z-projection): " << *p_curr;
-//    cout << "W: "<<W;
-
-    // Print p_curr
-//    for (int i = 0; i < n*k; i++) {
-////        if (i % n == 0) { cout<<"\n"; }
-//        cout << p_curr1[i] << "\n";
-//    }
-
-//    cout << "\n\n\n--------------Finished one whole run----------\n\n\n";
-
-//    int debug_placeholder = 5;
-
-//    print_to_file(p_next1, "../inputs/Z_output.txt", n, k);
+// Use this to check RAM usage
 //    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
 //    cout << "Peak Residual Set Size (RAM usage): " << (float) getPeakRSS() / (1024*1024) << " MB\n\n";
 
@@ -347,7 +225,7 @@ void Compute(graph<vertex> &GA, commandLine P) { // Call PageRank
 }
 
 void print_to_file(const float* Z, string file_name, const int n, const int k) {
-    cout << "Saving Z to " << file_name << "\n";
+    cout << "\n\nSaving Z to " << file_name << "\n";
     std::ofstream outfile(file_name);
     if (outfile.is_open()) {
         int i = 0;
