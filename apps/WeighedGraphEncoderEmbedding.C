@@ -35,7 +35,7 @@
 #include <chrono>
 #include "graphIO.h"
 
-void print_to_file(const float *Z, string file_name, const int n, const int k);
+void print_to_file(const double *Z, string file_name, const int n, const int k);
 
 size_t getCurrentRSS();
 
@@ -47,7 +47,7 @@ size_t getPeakRSS();
 template<class symmetricVertex>
 struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     double *z_curr;
-    float *z_next; // Ariel - these are already vectors! No need to worry about assigning them
+    double *z_next; // Ariel - these are already vectors! No need to worry about assigning them
 //    double *z_curr2, *z_next2; // TODO Ariel make matrix later. C++ pointers are fighting me. Now: check correctness
     int *Y; // Supervised labels for each vertex. More fitting as memeber of Vertex class but whatever
     symmetricVertex *V;
@@ -66,15 +66,15 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 //            : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
 //            z_curr1(_z_curr1), z_next1(_z_next1), z_curr2(_z_curr2), z_next2(_z_next2), Y(_Y), W(_W), V(_V) {}
 
-    float *W;
+    double *W;
 
-    PR_F(double *_z_curr, float *_z_next, const int _n, int *_Y, float *_W, symmetricVertex *_V)
+    PR_F(double *_z_curr, double *_z_next, const int _n, int *_Y, double *_W, symmetricVertex *_V)
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
             z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V) {}
 
 
     // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
-    inline bool update(uintE s, uintE d, float weight) {
+    inline bool update(uintE s, uintE d, double weight) {
         //update function applies PageRank equation
 
         // Ariel I believe -1 or negative label means don't know - ignored
@@ -156,7 +156,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
     double *p_curr1 = newA(double, 1);
 //    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
 //    p_curr1[n*k] = NAN;
-    float *p_next1 = newA(float, n * k + 1);
+    double *p_next1 = newA(double, n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) p_next1[i] = 0; } //0 if unchanged
     p_next1[n * k] = NAN;
     bool *frontier = newA(bool, n); // Frontier should be whole graph's edges
@@ -200,7 +200,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     vertexSubset Frontier(n, n, frontier);
 
-    float *W = newA(float, n * k + 1);
+    double *W = newA(double, n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) W[i] = 0; }
     W[n * k] = NAN;
 
@@ -219,7 +219,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
 
 // Use this to print output to file to test correctness
-    print_to_file(p_next1, "./testing/outputs_to_compare/Ligra_outputs/Z_output.csv", n, k);
+    print_to_file(p_next1, "./testing/Z_output.csv", n, k);
 
 // Use this to check RAM usage
 //    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
@@ -234,7 +234,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
 
 // n - nr. vertices. k - nr. classes
-void print_to_file(const float *Z, string file_name, const int n, const int k) {
+void print_to_file(const double *Z, string file_name, const int n, const int k) {
     cout << "\n\nSaving Z to " << file_name << "\n";
     std::ofstream outfile(file_name);
     if (outfile.is_open()) {
