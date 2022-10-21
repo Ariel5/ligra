@@ -323,11 +323,11 @@ graph<vertex> readGraphFromFile(char *fname, bool isSymmetric, bool mmap, bool l
                 uintT o = tOffsets[i];
                 uintT l = ((i == n - 1) ? m : tOffsets[i + 1]) - tOffsets[i];
                 v[i].setInDegree(l);
-#ifndef WEIGHTED
-                v[i].setInNeighbors(inEdges + o);
-#else
-                v[i].setInNeighbors(inEdges+2*o);
-#endif
+                #ifndef WEIGHTED
+                    v[i].setInNeighbors(inEdges + o);
+                #else
+                    v[i].setInNeighbors(inEdges+2*o);
+                #endif
             }
         }
 
@@ -339,13 +339,11 @@ graph<vertex> readGraphFromFile(char *fname, bool isSymmetric, bool mmap, bool l
         // TODO Ariel do this for symmetric graphs too
         // TODO TOP CAREFUL!! IN PARALLEL_FOR, NOT GUARANTEED THAT V[I].INDEGREE IS SET
         // THIS MAY HAVE TO STAY SERIAL
-        {
-//            parallel_for (long i = 0; i < m; i++) {
-            // This is actually O(m) due to the inner loop
+        #ifndef WEIGHTED
+            { parallel_for (long i = 0; i < n; i++) GEEDegrees[i] = v[i].getInDegree() + v[i].getOutDegree(); } // Init to 0
+        #else
             for (long i = 0; i < n - 1; i++) {
-            #ifndef WEIGHTED
-                edges[i] = edges[i]; // useless on purpose TODO think about this later & Fix Unweighted
-            #else
+
                 const long edges_start = offsets[i]; // Offset contains the mapping of which edges start from which vertex
                 const long edges_end = offsets[i+1]; // This includes 2x for weighted (since edges are stored (d,w))
 
@@ -358,9 +356,9 @@ graph<vertex> readGraphFromFile(char *fname, bool isSymmetric, bool mmap, bool l
                         GEEDegrees[edges[2*c]] += edges[2*c+1];
                 }
                 // *= 1/sqrt(v[i].getInDegree()) * 1/sqrt(v[2*i].getInDegree()); // Laplacian weight from GEE
-            #endif
             }
-        }
+        #endif
+
 
         free(offsets);
         free(tOffsets);
