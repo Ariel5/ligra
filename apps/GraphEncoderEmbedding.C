@@ -41,42 +41,32 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     int *Y; // Supervised labels for each vertex. More fitting as memeber of Vertex class but whatever
     vertex *V;
     const int n;
-
-    // 1st in // 1st in https://stackoverflow.com/questions/8767166/passing-a-2d-array-to-a-c-function
-        // "Array initializer must be a list"
-//    float W[5][2];
-//    PR_F(double *_z_curr1, double *_z_next1,double *_z_curr2, double *_z_next2, int *_Y, float _W[][2], vertex *_V)
-//            : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
-//            z_curr1(_z_curr1), z_next1(_z_next1), z_curr2(_z_curr2), z_next2(_z_next2), Y(_Y), W(_W), V(_V) {}
-
-    // 2nd - "Array initializer must be a list"
-//    float *W[2];
-//    PR_F(double *_z_curr1, double *_z_next1,double *_z_curr2, double *_z_next2, int *_Y, float *_W[2], vertex *_V)
-//            : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
-//            z_curr1(_z_curr1), z_next1(_z_next1), z_curr2(_z_curr2), z_next2(_z_next2), Y(_Y), W(_W), V(_V) {}
+    string laplacian;
 
     float *W;
-    PR_F(double *_z_curr, float *_z_next, const int _n, int *_Y, float *_W, vertex *_V)
+    PR_F(double *_z_curr, float *_z_next, const int _n, int *_Y, float *_W, vertex *_V, string _laplacian)
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
-            z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V) {}
+            z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V), laplacian(_laplacian) {}
 
 
     // Ariel Which is the source and destination vertices?
         // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
     inline bool update(uintE s, uintE d) { //update function applies PageRank equation
-        // Swap s,d lol
-//        uintE temp = d;
-//        d = s;
-//        s = temp;
-//        cout << d << " " << s << "\n";
-
         // Ariel I believe -1 or negative label means don't know - ignored
-        if (Y[d] >= 0) { // TODO Ariel TOP I need some kind of += for curr and next
-            z_next[Y[d]*n + s] += W[Y[d]*n + d] * 1; // TODO Ariel Assuming unweighted edges! Ligra has weightedEdge class? Else pass as argument to update()
+        // TODO Ariel Assuming unweighted edges!
+
+        if (laplacian == "false") {
+            if (Y[d] >= 0)
+                z_next[Y[d] * n + s] += W[Y[d] * n + d] * 1;
+            if (Y[s] >= 0)
+                z_next[Y[s] * n + d] += W[Y[s] * n + s] * 1;
+        } else {
+            if (Y[d] >= 0)
+                z_next[Y[d] * n + s] += W[Y[d] * n + d] * 1/ sqrt(V[s].getInDegree() + V[s].getOutDegree()) * 1/ sqrt(V[d].getInDegree() + V[d].getOutDegree());
+            if (Y[s] >= 0)
+                z_next[Y[s] * n + d] += W[Y[s] * n + s] * 1/ sqrt(V[s].getInDegree() + V[s].getOutDegree()) * 1/ sqrt(V[d].getInDegree() + V[d].getOutDegree());
         }
-        if (Y[s] >= 0) {
-            z_next[Y[s]*n + d] += W[Y[s]*n + s] * 1;
-        }
+
         return 1;
     }
 
@@ -137,17 +127,10 @@ void Compute(graph<vertex> &GA, commandLine P) {
     // TODO make this less ugly - use argc/argv
     const string laplacian = P.getOptionValue("-Laplacian", "false");
 
-//    if (laplacian == "true") {
-//        // L - the laplacian graph: an edgelist with weights corresponding to D^{-0.5} A D^{-0.5}
-//        //  See Graph Encoder Embedding paper for more information
-//        wghEdgeArray<intT> L = laplacianGraph(GA, GA.n, GA.m);
-//    }
-
     const intE n = GA.n;
 
     double *p_curr1 = newA(double, 1);
 //    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
-//    p_curr1[n*k] = NAN;
     float *p_next1 = newA(float, n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) p_next1[i] = 0; } //0 if unchanged
     p_next1[n * k] = NAN;
@@ -203,15 +186,16 @@ void Compute(graph<vertex> &GA, commandLine P) {
     }
 // So far, W is good
 
-// Each vertex has (kx1) Z-matrix
-//    long iter = 0;
-//    while (iter++ < maxIters) { // TODO why is this here? We do only 1 iter
-    edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V), 0, no_output);
+    edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V, laplacian), 0, no_output);
 
-
+    // Debugging inf output Ariel
+    for (int i = 0; i < n * 20; i++) {
+        if (p_next1[i] > 10000)
+            cout << i << ": " << p_next1[i] << "\n";
+    }
 
 // Use this to print output to file to test correctness
-    print_to_file(p_next1, "./testing/outputs_to_compare/Ligra_outputs/Z_output.csv", n, k);
+    print_to_file(p_next1, "./testing/Z_output.csv", n, k);
 
 // Use this to check RAM usage
 //    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
@@ -235,7 +219,7 @@ void print_to_file(const float* Z, string file_name, const int n, const int k) {
             for (int j=0; j<k; j++) {
                 row.append(std::to_string(Z[j*n + i]));
                 if (j != k-1) {
-                    row.append(","); // CSV-like
+                    row.append(" "); // CSV-like
                 }
             }
             outfile << row << "\n";
