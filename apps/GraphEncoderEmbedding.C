@@ -188,11 +188,11 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V, laplacian), 0, no_output);
 
-    // Debugging inf output Ariel
-    for (int i = 0; i < n * 20; i++) {
-        if (p_next1[i] > 10000)
-            cout << i << ": " << p_next1[i] << "\n";
-    }
+//    // Debugging inf output Ariel
+//    for (int i = 0; i < n * 20; i++) {
+//        if (p_next1[i] > 10000)
+//            cout << i << ": " << p_next1[i] << "\n";
+//    }
 
 // Use this to print output to file to test correctness
     print_to_file(p_next1, "./testing/Z_output.csv", n, k);
