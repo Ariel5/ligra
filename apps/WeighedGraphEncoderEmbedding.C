@@ -104,7 +104,8 @@ struct vertex_degrees_lapl { // Do this to edges. But aren't edges defn. by thei
     // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
     inline bool update(uintE s, uintE d, intE weight) {
         deg_matrix[s] += weight;
-        deg_matrix[d] += weight;
+        if (s != d) // If not self-edge
+            deg_matrix[d] += weight;
 
         return 1;
     }
