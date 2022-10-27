@@ -43,7 +43,7 @@ size_t getPeakRSS();
 // Ariel - PRUpdate(s,d) in paper
 template<class symmetricVertex>
 struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
-    double *z_curr;
+    uintE *laplacian_degree_vector;
     float *z_next; // Ariel - these are already vectors! No need to worry about assigning them
 //    double *z_curr2, *z_next2; // TODO Ariel make matrix later. C++ pointers are fighting me. Now: check correctness
     int *Y; // Supervised labels for each vertex. More fitting as memeber of Vertex class but whatever
@@ -53,9 +53,9 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 
     float *W;
 
-    PR_F(double *_z_curr, float *_z_next, const int _n, int *_Y, float *_W, symmetricVertex *_V, string _laplacian)
+    PR_F(uintE *_laplacian_degree_vector, float *_z_next, const int _n, int *_Y, float *_W, symmetricVertex *_V, string _laplacian)
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
-            z_curr(_z_curr), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V), laplacian(_laplacian) {}
+            laplacian_degree_vector(_laplacian_degree_vector), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V), laplacian(_laplacian) {}
 
 
     // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
@@ -68,8 +68,8 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
             if (Y[s] >= 0)
                 z_next[Y[s] * n + d] += W[Y[s] * n + s] * weight;
         } else {
-            const double deg_s = 1 / sqrt((V[s].getInDegree() + V[s].getOutDegree()));
-            const double deg_d = 1 / sqrt((V[d].getInDegree() + V[d].getOutDegree()));
+            const double deg_s = 1 / sqrt(laplacian_degree_vector[s]);
+            const double deg_d = 1 / sqrt(laplacian_degree_vector[d]);
 
             const double gee_weight = weight * deg_s * deg_d;
 
@@ -91,6 +91,32 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     inline bool cond(intT d) { return cond_true(d); }
 }; // No condition. Apply to all vertices
 
+template<class symmetricVertex>
+struct vertex_degrees_lapl { // Do this to edges. But aren't edges defn. by their vertices?
+    uintE *deg_matrix;
+    symmetricVertex *V;
+
+    vertex_degrees_lapl(uintE *_deg_matrix, symmetricVertex *_V)
+            : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
+            deg_matrix(_deg_matrix), V(_V) {}
+
+
+    // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
+    inline bool update(uintE s, uintE d, intE weight) {
+        deg_matrix[s] += weight;
+        deg_matrix[d] += weight;
+
+        return 1;
+    }
+
+    // TODO Ariel Hope this isn't used bcs. I didn't change it lol
+    inline bool updateAtomic(uintE s, uintE d, intE w) { //atomic Update
+//        writeAdd(&z_next[d], z_curr[s] / V[s].getOutDegree()); // TODO Ariel When to use this vs. Normal
+        return 1;
+    }
+
+    inline bool cond(intT d) { return cond_true(d); }
+}; // No condition. Apply to all vertices
 
 // Embedding Matrix is kxN - map each vertex to a label. GEE iterates over edges
 
@@ -140,9 +166,16 @@ void Compute(graph<vertex> &GA, commandLine P) {
     const string laplacian = P.getOptionValue("-Laplacian", "false");
     const intE n = GA.n;
 
-    double *p_curr1 = newA(double, 1);
-//    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
-//    p_curr1[n*k] = NAN;
+    uintE *degree_vector; // Only useful for weighted Laplacian version
+    // TODO Still limited to Integer graph weights from Ligra graphIO.h
+
+    if (laplacian == "true") {
+        degree_vector = newA(uintE, n); // D from GraphEncoderEmbedding.py
+        { parallel_for (long i = 0; i < n; i++) degree_vector[i] = 0.0; } // Init all in parallel
+    }
+    else
+        degree_vector = newA(uintE, 1);
+
     float *p_next1 = newA(float, n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) p_next1[i] = 0; } //0 if unchanged
     p_next1[n * k] = NAN;
@@ -198,7 +231,10 @@ void Compute(graph<vertex> &GA, commandLine P) {
     }
     // So far, W is good
 
-    edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V, laplacian), 0, no_output);
+    if (laplacian == "true") // Add edge weights to degree matrix. Assuming no self-edges
+        edgeMap(GA, Frontier, vertex_degrees_lapl<vertex>(degree_vector, GA.V), 0, no_output);
+
+    edgeMap(GA, Frontier, PR_F<vertex>(degree_vector, p_next1, n, Y, W, GA.V, laplacian), 0, no_output);
 
     // Debugging inf output Ariel
     for (int i = 0; i < n * 20; i++) {
@@ -214,7 +250,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 //    cout << "Peak Residual Set Size (RAM usage): " << (float) getPeakRSS() / (1024*1024) << " MB\n\n";
 
     Frontier.del();
-    free(p_curr1);
+    free(degree_vector);
     free(p_next1);
     free(W);
     free(Y);
