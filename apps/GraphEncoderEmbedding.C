@@ -126,6 +126,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 //    const int randomY = P.getOptionIntValue("-randomY", 0);
     // TODO make this less ugly - use argc/argv
     const string laplacian = P.getOptionValue("-Laplacian", "false");
+    const string saveEmbedding = P.getOptionValue("-saveEmbedding", "true");
 
     const intE n = GA.n;
 
@@ -195,7 +196,8 @@ void Compute(graph<vertex> &GA, commandLine P) {
 //    }
 
 // Use this to print output to file to test correctness
-    print_to_file(p_next1, "./Z_output.csv", n, k);
+    if (saveEmbedding == "true")
+        print_to_file(p_next1, "./Z_output.csv", n, k);
 
 // Use this to check RAM usage
 //    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
