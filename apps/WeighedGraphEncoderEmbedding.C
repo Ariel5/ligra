@@ -232,16 +232,18 @@ void Compute(graph<vertex> &GA, commandLine P) {
     }
     // So far, W is good
 
+    cout << "\n\n" << laplacian;
+
     if (laplacian == "true") // Add edge weights to degree matrix. Assuming no self-edges
         edgeMap(GA, Frontier, vertex_degrees_lapl<vertex>(degree_vector, GA.V), 0, no_output);
 
     edgeMap(GA, Frontier, PR_F<vertex>(degree_vector, p_next1, n, Y, W, GA.V, laplacian), 0, no_output);
 
     // Debugging inf output Ariel
-    for (int i = 0; i < n * 20; i++) {
-        if (p_next1[i] > 10000)
-            cout << i << ": " << p_next1[i] << "\n";
-    }
+//    for (int i = 0; i < n * 20; i++) {
+//        if (p_next1[i] > 10000)
+//            cout << i << ": " << p_next1[i] << "\n";
+//    }
 
 // Use this to print output to file to test correctness
     print_to_file(p_next1, "./Z_output.csv", n, k);

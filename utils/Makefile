@@ -1,3 +1,7 @@
+OS := $(shell uname)
+
+$(info $$OS is $(OS)) # 'Darwin' for MacOS
+
 ifdef LONG
 INTT = -DLONG
 endif
@@ -20,14 +24,22 @@ else ifdef OPENMP
 PCC = g++
 PCFLAGS = -std=c++14 -fopenmp -march=native -O3 -DOPENMP $(INTT) $(INTE)
 
+
+
+else ifeq ($(OS),Darwin) 
+# MacOS
+# Aliasing g++ to /opt/llvm doesn't work in CLion
+PCC = /opt/homebrew/opt/llvm/bin/clang++
+# PCFLAGS = -std=c++14 -march=native -O3 $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Serial
+PCFLAGS = -std=c++14 -march=native -O3 -fopenmp -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Parallel
 else
-PCC = g++
+PCC = g++ #Linux
 PCFLAGS = -std=c++14 -fopenmp -march=native -O3 -DOPENMP $(INTT) $(INTE)
 endif
 
 COMMON = utils.h parseCommandLine.h parallel.h quickSort.h blockRadixSort.h transpose.h
 LOCAL_COMMON = graphIO.h
-GENERATORS = rMatGraph gridGraph randLocalGraph SNAPtoAdj wghSNAPtoAdj adjGraphAddWeights adjToBinary communityToHyperAdj hyperAdjToBinary adjHypergraphAddWeights randHypergraph KONECTtoHyperAdj KONECTtoClique communityToClique communityToMESH KONECTtoMESH
+GENERATORS = rMatGraph gridGraph randLocalGraph SNAPtoAdj intWeightSNAPtoAdj adjGraphAddWeights adjToBinary communityToHyperAdj hyperAdjToBinary adjHypergraphAddWeights randHypergraph KONECTtoHyperAdj KONECTtoClique communityToClique communityToMESH KONECTtoMESH
 
 .PHONY: all clean
 all: $(GENERATORS)
