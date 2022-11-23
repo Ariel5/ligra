@@ -1,6 +1,7 @@
 //
 // Created by Ariel Lubonja on 10/13/22.
-// This file is the weighted edge version of Graph Encoder Embedding
+// This file is the weighted edge version of Graph Encoder Embedding (GEE)
+// This version also handles the Laplacian version of GEE
 // Due to Ligra's implementation, it is not straightforward to join the two into a single file
 //
 
@@ -32,7 +33,6 @@
 #include <vector>
 #include "ligra.h"
 #include <cmath>
-#include <chrono>
 
 void print_to_file(const float* Z, string file_name, const int n, const int k);
 size_t getCurrentRSS();
@@ -131,7 +131,7 @@ struct PR_Vertex_F { // TODO Diff vs. PR_F?
     double *p_next;
 
     PR_Vertex_F(double *_p_curr, double *_p_next, double _damping, intE n) : // Bigger constructor? Damping?
-    p_curr(_p_curr), p_next(_p_next),
+            p_curr(_p_curr), p_next(_p_next),
             damping(_damping), addedConstant((1 - _damping) * (1 / (double) n)) {}
 
     inline bool operator()(uintE i) { // TODO Ariel why the index i?
@@ -145,7 +145,7 @@ struct PR_Vertex_Reset {
     double *p_curr;
 
     PR_Vertex_Reset(double *_p_curr) :
-    p_curr(_p_curr) {}
+            p_curr(_p_curr) {}
 
     inline bool operator()(uintE i) {
         p_curr[i] = 0.0;
@@ -165,6 +165,8 @@ void Compute(graph<vertex> &GA, commandLine P) {
 //    const int randomY = P.getOptionIntValue("-randomY", 0);
     // TODO make this less ugly - use argc/argv
     const string laplacian = P.getOptionValue("-Laplacian", "false");
+    const string saveEmbedding = P.getOptionValue("-saveEmbedding", "true");
+
     const intE n = GA.n;
 
     uintE *degree_vector; // Only useful for weighted Laplacian version
@@ -246,7 +248,8 @@ void Compute(graph<vertex> &GA, commandLine P) {
 //    }
 
 // Use this to print output to file to test correctness
-    print_to_file(p_next1, "./Z_output.csv", n, k);
+    if (saveEmbedding == "true")
+        print_to_file(p_next1, "./Z_output.csv", n, k);
 
 // Use this to check RAM usage
 //    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";

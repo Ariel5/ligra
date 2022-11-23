@@ -1,3 +1,9 @@
+//
+// Created by Ariel Lubonja on 10/13/22.
+// This file is the unweighted edge version of Graph Encoder Embedding
+// Due to Ligra's implementation, it is not straightforward to join the two into a single file
+//
+
 // This code is part of the project "Ligra: A Lightweight Graph Processing
 // Framework for Shared Memory", presented at Principles and Practice of
 // Parallel Programming, 2013.
@@ -79,11 +85,9 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     inline bool cond(intT d) { return cond_true(d); }
 }; // No condition. Apply to all vertices
 
+// Embedding Matrix is kxN - map each vertex to a label. GEE iterates over edges
 
-// TODO Ariel Embedding Matrix is kxN - map each vertex to a label
-//  Yet, iterates over edges
-
-// PRLocalCompute(i) in paper
+// PRLocalCompute(i) in Ligra paper
 //vertex map function to update its p value according to PageRank equation
 struct PR_Vertex_F { // TODO Diff vs. PR_F?
     // TODO Ariel let's reuse p_curr, p_next for self.encoder_embedding
@@ -116,6 +120,7 @@ struct PR_Vertex_Reset {
 };
 
 
+// Run GEE
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) {
     const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
@@ -125,8 +130,16 @@ void Compute(graph<vertex> &GA, commandLine P) {
     // For benchmark purposes. to avoid loading Y time. Actually not much faster
 //    const int randomY = P.getOptionIntValue("-randomY", 0);
     // TODO make this less ugly - use argc/argv
-    const string laplacian = P.getOptionValue("-Laplacian", "false");
+    string laplacian = P.getOptionValue("-Laplacian", "false");
     const string saveEmbedding = P.getOptionValue("-saveEmbedding", "true");
+
+    if (laplacian == "true") {
+        cout << "\n\n\nWARNING - Use of -Laplacian flag is not supported for the unweighed version of Graph Encoder Embedding";
+        cout << "\nWARNING - Please use the same command but running WeighedGraphEncoderEmbedding.C instead";
+        cout << "\nWARNING - This parameter is being ignored, and the Adjacency version of GEE is being run";
+
+        laplacian = "false";
+    }
 
     const intE n = GA.n;
 
@@ -185,7 +198,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
         if (k_i >= 0)
             W[k_i * n + i] = 1.0 / nk[k_i];
     }
-// So far, W is good
+    // So far, W is good
 
     edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V, laplacian), 0, no_output);
 
