@@ -234,7 +234,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
     }
     // So far, W is good
 
-    cout << "\n\n" << laplacian;
+//    cout << "\n\n" << laplacian;
 
     if (laplacian == "true") // Add edge weights to degree matrix. Assuming no self-edges
         edgeMap(GA, Frontier, vertex_degrees_lapl<vertex>(degree_vector, GA.V), 0, no_output);
