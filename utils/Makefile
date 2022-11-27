@@ -34,7 +34,8 @@ PCC = /opt/homebrew/opt/llvm/bin/clang++
 PCFLAGS = -std=c++14 -march=native -O3 -fopenmp -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Parallel
 else
 PCC = g++ #Linux
-PCFLAGS = -std=c++14 -fopenmp -march=native -O3 -DOPENMP $(INTT) $(INTE)
+PCFLAGS = -std=c++14 -fopenmp -march=native -O3 -DOPENMP $(INTT) $(INTE) # Parallel
+# PCFLAGS = -std=c++14 -march=native -O3 $(INTT) $(INTE) # Serial
 endif
 
 COMMON = utils.h parseCommandLine.h parallel.h quickSort.h blockRadixSort.h transpose.h
