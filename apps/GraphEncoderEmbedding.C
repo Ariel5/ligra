@@ -124,7 +124,7 @@ struct PR_Vertex_Reset {
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) {
     const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
-    const string graphName = P.getOptionValue("-graphName", "Facebook");
+
     // Embedding semi-supervised labels
     const string Y_LOCATION = P.getOptionValue("-yLocation", "None");
     // For benchmark purposes. to avoid loading Y time. Actually not much faster
@@ -141,7 +141,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
         laplacian = "false";
     }
 
-    const intE n = GA.n;
+    const long long int n = GA.n;
 
     double *p_curr1 = newA(double, 1);
 //    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel

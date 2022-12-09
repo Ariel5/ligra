@@ -158,7 +158,6 @@ struct PR_Vertex_Reset {
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) {
     const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
-    const string graphName = P.getOptionValue("-graphName", "Facebook");
     // Embedding semi-supervised labels
     const string Y_LOCATION = P.getOptionValue("-yLocation", "None");
     // For benchmark purposes. to avoid loading Y time. Actually not much faster
@@ -167,7 +166,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
     const string laplacian = P.getOptionValue("-Laplacian", "false");
     const string saveEmbedding = P.getOptionValue("-saveEmbedding", "true");
 
-    const intE n = GA.n;
+    const long long int n = GA.n;
 
     uintE *degree_vector; // Only useful for weighted Laplacian version
     // TODO Still limited to Integer graph weights from Ligra graphIO.h
