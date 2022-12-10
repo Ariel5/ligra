@@ -1,4 +1,4 @@
-Note: This is my implementation of [Graph Encoder Embedding](https://arxiv.org/abs/2109.13098) in the Ligra framework.
+Implementation of [Graph Encoder Embedding](https://arxiv.org/abs/2109.13098) in the Ligra framework.
 ======================
 
 This speeds up the original implementation by 10-100x, making Graph Encoder Embedding a very useful tool for learning on Graphs. It also offers the versatility of weighted, directed, and Graph Laplacian embedding.
@@ -7,6 +7,20 @@ Branches give different functionality: **master** provides the unweighted versio
 I cannot easily join these two together in one due to Ligra needing to use a flag *#define WEIGHTED=1* which makes it incompatible with the unweighted version.
 
 Note: SNAP referred to by Ligra = the edgelist graph format (source, vertex, weight-optional)
+
+
+How to Use
+======================
+
+1. After cloning this repo, go to `ligra/utils`
+2. `make -j` to compile the contents
+3. Have your graph in an Edgelist format, where each line of the graph file looks like: source dest optional-weight
+4. Use `./SNAPtoAdj edgelist_graphname output_graphname.AdjGraph` to generate Ligra Adjacency Graph format from your graph. If your graph is weighed, use `intWeightSNAPtoAdj`.
+5. Go to directory `ligra/apps` and `make -j` to Compile
+6. You will need to provide a vector of "ground-truth" for the nodes of the graph - this is the `twitch-Y20.csv` below. It should be a column of integers of length equal to nr. nodes. If you do not have ground truth for some (or all) nodes, fill the corresponding spaces (or the whole vector) with the integer -1. This will run the Embedding in clustering mode
+7. `./GraphEncoderEmbedding -rounds 7 -nClusters 20 -saveEmbedding true -Laplacian false -yLocation ./twitch-Y20.csv ./twitchUnwNoSymm.AdjGraph` to run and save the produced embedding. Similarly, for weighed graphs use `WeighedGraphEncoderEmbedding`
+8. Find your embedding at the location outputted by running the code
+
 
 Below is the original Ligra README
 
