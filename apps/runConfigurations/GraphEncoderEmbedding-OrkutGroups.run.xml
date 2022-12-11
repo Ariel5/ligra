@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="GraphEncoderEmbedding-OrkutGroups" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="-rounds 10 -divide 0 -nClusters 40 -graphName OrkutGroups -s ../inputs/orkut-groupsAdjGraph" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="apps" TARGET_NAME="GraphEncoderEmbedding" CONFIG_NAME="GraphEncoderEmbedding" version="1" RUN_PATH="$PROJECT_DIR$/GraphEncoderEmbedding">
+  <configuration default="false" name="GraphEncoderEmbedding-OrkutGroups" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="-rounds 7 -nClusters 40 -saveEmbedding false -Laplacian false -yLocation ../../Thesis-Graph-Data/Ys/orkut-groups-Y40.csv ../../Thesis-Graph-Data/Ligra-AdjGraphs/orkut-groupsUnwNoSymm.AdjGraph" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="apps" TARGET_NAME="GraphEncoderEmbedding" CONFIG_NAME="GraphEncoderEmbedding" version="1" RUN_PATH="$PROJECT_DIR$/GraphEncoderEmbedding">
     <method v="2">
       <option name="CLION.COMPOUND.BUILD" enabled="true" />
     </method>

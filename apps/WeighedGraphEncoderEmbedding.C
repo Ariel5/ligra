@@ -187,6 +187,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
     int *Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
 
     if (Y_LOCATION != "None") {
+        timer t; t.start();
         cout << "Loading specified Y file at " + Y_LOCATION;
         string a;
         std::ifstream infile(Y_LOCATION);
@@ -196,12 +197,13 @@ void Compute(graph<vertex> &GA, commandLine P) {
         }
         int i = 0;
         if (infile.is_open()) {
-            while (std::getline(infile, a)) {
+            while (std::getline(infile, a)) { // Todo make parallel
                 Y[i] = std::stoi(a);
                 i++;
 //                if (i == n) { break; }
             }
         }
+        t.stop(); t.reportTotal("Running time: ");
     }
 
 // nk: 1*n array, contains the number of observations in each class
@@ -210,14 +212,17 @@ void Compute(graph<vertex> &GA, commandLine P) {
 // Not doing possibility_detected from GEE.py
     int nk[k]; // Confirmed correct Facebook graph
 // TODO Ariel implement count_nonzero later. Should return nk = {3,2}
-    for (int i = 0; i < k; i++) {
-// TODO Ariel Why need count of indices nk?
-        int nonzeroYCount = 0;
-        for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
-            if (Y[j] == i)
-                nonzeroYCount++;
+    {
+        parallel_for (int i = 0; i < k; i++) {
+            int nonzeroYCount = 0;
+            {
+                parallel_for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
+                    if (Y[j] == i)
+                        nonzeroYCount++;
+                }
+            }
+            nk[i] = nonzeroYCount;
         }
-        nk[i] = nonzeroYCount;
     }
 
     vertexSubset Frontier(n, n, frontier);
@@ -226,11 +231,11 @@ void Compute(graph<vertex> &GA, commandLine P) {
     { parallel_for (long i = 0; i < n * k; i++) W[i] = 0; }
     W[n * k] = NAN;
 
-    for (int i = 0; i < n; i++) { // For i in range(Y.shape[0]) in GEE.py
-        int k_i = Y[i]; // TODO LOW Using 1D Y
-        if (k_i >= 0)
-            W[k_i * n + i] = 1.0 / nk[k_i];
-    }
+    { parallel_for (int i = 0; i < n; i++) { // For i in range(Y.shape[0]) in GEE.py
+            int k_i = Y[i]; // TODO LOW Using 1D Y
+            if (k_i >= 0)
+                W[k_i * n + i] = 1.0 / nk[k_i];
+        }}
     // So far, W is good
 
 //    cout << "\n\n" << laplacian;
