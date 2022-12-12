@@ -62,12 +62,12 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
         // TODO Ariel Assuming unweighted edges!
 
         if (laplacian == "false") {
-            if (Y[d] >= 0)
-                z_next[Y[d] * n + s] += W[Y[d] * n + d] * 1;
+            if (Y[d] >= 0 && s != d) // Asymmetric in GEE.py too. Also, in Ligra s,d are swapped
+                z_next[Y[d] * n + s] += W[Y[d] * n + d];
             if (Y[s] >= 0)
-                z_next[Y[s] * n + d] += W[Y[s] * n + s] * 1;
+                z_next[Y[s] * n + d] += W[Y[s] * n + s];
         } else {
-            if (Y[d] >= 0)
+            if (Y[d] >= 0 && s != d)
                 z_next[Y[d] * n + s] += W[Y[d] * n + d] * 1/ sqrt(V[s].getInDegree() + V[s].getOutDegree()) * 1/ sqrt(V[d].getInDegree() + V[d].getOutDegree());
             if (Y[s] >= 0)
                 z_next[Y[s] * n + d] += W[Y[s] * n + s] * 1/ sqrt(V[s].getInDegree() + V[s].getOutDegree()) * 1/ sqrt(V[d].getInDegree() + V[d].getOutDegree());
@@ -215,7 +215,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
 // Use this to print output to file to test correctness
     if (saveEmbedding == "true")
-        print_to_file(p_next1, "./Z_output.csv", n, k);
+        print_to_file(p_next1, "./Z_to_check.csv", n, k);
 
 // Use this to check RAM usage
 //    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";

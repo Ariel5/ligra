@@ -63,7 +63,7 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
         //update function applies PageRank equation
 
         if (laplacian == "false") {
-            if (Y[d] >= 0)
+            if (Y[d] >= 0 && s != d)
                 z_next[Y[d] * n + s] += W[Y[d] * n + d] * weight;
             if (Y[s] >= 0)
                 z_next[Y[s] * n + d] += W[Y[s] * n + s] * weight;
@@ -73,9 +73,9 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
 
             const double gee_weight = weight * deg_s * deg_d;
 
-            if (Y[d] >= 0)
+            if (Y[d] >= 0 && s != d)
                 z_next[Y[d] * n + s] += W[Y[d] * n + d] * gee_weight;
-            if (Y[s] >= 0 && s != d)
+            if (Y[s] >= 0)
                 z_next[Y[s] * n + d] += W[Y[s] * n + s] * gee_weight;
         }
 
