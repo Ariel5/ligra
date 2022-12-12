@@ -44,8 +44,9 @@ else ifeq ($(OS),Darwin)
 # Run MacOS commands
 # Aliasing g++ to /opt/llvm doesn't work in CLion
 PCC = /opt/homebrew/opt/llvm/bin/clang++
-# PCFLAGS = -std=c++14 -march=native -O3 -fopenmp $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Serial
-PCFLAGS = -std=c++14 -march=native -O3 -fopenmp -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Parallel
+PCFLAGS = -std=c++14 -march=native -O3 -fopenmp $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Serial
+# PCFLAGS = -std=c++14 -march=native -O3 $(INTT) $(INTE) $(CODE) $(PD) 
+$(MEM) # Parallel
 else
 # check for Linux and run other commands
 PCC = g++ # Add these for parallel run -fopenmp -DOPENMP. To Debug, add -g

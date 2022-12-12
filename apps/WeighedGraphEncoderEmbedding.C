@@ -253,7 +253,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
 // Use this to print output to file to test correctness
     if (saveEmbedding == "true")
-        print_to_file(p_next1, "./Z_output.csv", n, k);
+        print_to_file(p_next1, "./Z_to_check.csv", n, k);
 
 // Use this to check RAM usage
 //    cout << "current Residual Set Size (RAM usage): " << (float) getCurrentRSS() / (1024*1024) << " MB\n\n";
