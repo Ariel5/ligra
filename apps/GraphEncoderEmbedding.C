@@ -59,19 +59,11 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
         // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
     inline bool update(uintE s, uintE d) { //update function applies PageRank equation
         // Ariel I believe -1 or negative label means don't know - ignored
-        // TODO Ariel Assuming unweighted edges!
 
-        if (laplacian == "false") {
-            if (Y[d] >= 0 && s != d) // Asymmetric in GEE.py too. Also, in Ligra s,d are swapped
-                z_next[Y[d] * n + s] += W[Y[d] * n + d];
-            if (Y[s] >= 0)
-                z_next[Y[s] * n + d] += W[Y[s] * n + s];
-        } else {
-            if (Y[d] >= 0 && s != d)
-                z_next[Y[d] * n + s] += W[Y[d] * n + d] * 1/ sqrt(V[s].getInDegree() + V[s].getOutDegree()) * 1/ sqrt(V[d].getInDegree() + V[d].getOutDegree());
-            if (Y[s] >= 0)
-                z_next[Y[s] * n + d] += W[Y[s] * n + s] * 1/ sqrt(V[s].getInDegree() + V[s].getOutDegree()) * 1/ sqrt(V[d].getInDegree() + V[d].getOutDegree());
-        }
+        if (Y[d] >= 0 && s != d) // Asymmetric in GEE.py too. Also, in Ligra s,d are swapped
+            z_next[Y[d] * n + s] += W[Y[d] * n + d];
+        if (Y[s] >= 0)
+            z_next[Y[s] * n + d] += W[Y[s] * n + s];
 
         return 1;
     }
