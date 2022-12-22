@@ -121,7 +121,6 @@ void Compute(graph<vertex> &GA, commandLine P) {
     const string Y_LOCATION = P.getOptionValue("-yLocation", "None");
     // For benchmark purposes. to avoid loading Y time. Actually not much faster
 //    const int randomY = P.getOptionIntValue("-randomY", 0);
-    // TODO make this less ugly - use argc/argv
     string laplacian = P.getOptionValue("-Laplacian", "false");
     const string saveEmbedding = P.getOptionValue("-saveEmbedding", "true");
 
@@ -159,7 +158,6 @@ void Compute(graph<vertex> &GA, commandLine P) {
             while (std::getline(infile, a)) {
                 Y[i] = std::stoi(a);
                 i++;
-//                if (i == n) { break; }
             }
         }
         t.stop(); t.reportTotal("Y loading time: ");
@@ -170,7 +168,6 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
 // Not doing possibility_detected from GEE.py
     int nk[k]; // Confirmed correct Facebook graph
-// TODO Ariel implement count_nonzero later. Should return nk = {3,2}
     {
         parallel_for (int i = 0; i < k; i++) {
             int nonzeroYCount = 0;
