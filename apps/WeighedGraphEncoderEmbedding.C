@@ -34,7 +34,7 @@
 #include "ligra.h"
 #include <cmath>
 
-void print_to_file(const float* Z, string file_name, const int n, const int k);
+void print_to_file(const double* Z, string file_name, const int n, const int k);
 size_t getCurrentRSS();
 size_t getPeakRSS();
 
@@ -44,39 +44,43 @@ size_t getPeakRSS();
 template<class symmetricVertex>
 struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     uintE *laplacian_degree_vector;
-    float *z_next; // Ariel - these are already vectors! No need to worry about assigning them
+    double *z_next; // Ariel - these are already vectors! No need to worry about assigning them
 //    double *z_curr2, *z_next2; // TODO Ariel make matrix later. C++ pointers are fighting me. Now: check correctness
     int *Y; // Supervised labels for each vertex. More fitting as memeber of Vertex class but whatever
     symmetricVertex *V;
     const int n;
     string laplacian;
 
-    float *W;
+    double *W;
 
-    PR_F(uintE *_laplacian_degree_vector, float *_z_next, const int _n, int *_Y, float *_W, symmetricVertex *_V, string _laplacian)
+    PR_F(uintE *_laplacian_degree_vector, double *_z_next, const int _n, int *_Y, double *_W, symmetricVertex *_V, string _laplacian)
             : // Constructor. Pass arrays by pointer - easiest way to pass arrays in structs
             laplacian_degree_vector(_laplacian_degree_vector), z_next(_z_next), n(_n), Y(_Y), W(_W), V(_V), laplacian(_laplacian) {}
 
 
-    // s seems to be DESTINATION! d - SOURCE. Found from debugging. TODO may change
-    inline bool update(uintE s, uintE d, intE weight) {
+    // s seems to be DESTINATION! d - SOURCE. Found from debugging
+    // s = v_j in GEE (Ligra flips them) => This is: if (label[v_j] >= 0)
+    inline bool update(uintE d, uintE s, intE weight) {
         //update function applies PageRank equation
 
         if (laplacian == "false") {
-            if (Y[d] >= 0 && s != d)
-                z_next[Y[d] * n + s] += W[Y[d] * n + d] * weight;
             if (Y[s] >= 0)
                 z_next[Y[s] * n + d] += W[Y[s] * n + s] * weight;
+            if (Y[d] >= 0 && s != d)
+                z_next[Y[d] * n + s] += W[Y[d] * n + d] * weight;
         } else {
             const double deg_s = 1 / sqrt(laplacian_degree_vector[s]);
             const double deg_d = 1 / sqrt(laplacian_degree_vector[d]);
 
             const double gee_weight = weight * deg_s * deg_d;
 
-            if (Y[d] >= 0 && s != d)
-                z_next[Y[d] * n + s] += W[Y[d] * n + d] * gee_weight;
+//            if ((d == 266863 && s == 401998) || (d == 401998 && s == 266863))
+//                int gimi = 3; // Debugging
+
             if (Y[s] >= 0)
                 z_next[Y[s] * n + d] += W[Y[s] * n + s] * gee_weight;
+            if (Y[d] >= 0 && s != d)
+                z_next[Y[d] * n + s] += W[Y[d] * n + d] * gee_weight;
         }
 
         return 1;
@@ -173,12 +177,12 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     if (laplacian == "true") {
         degree_vector = newA(uintE, n); // D from GraphEncoderEmbedding.py
-        { parallel_for (long i = 0; i < n; i++) degree_vector[i] = 0.0; } // Init all in parallel
+        { parallel_for (long i = 0; i < n; i++) degree_vector[i] = 0; } // Init all in parallel
     }
     else
         degree_vector = newA(uintE, 1);
 
-    float *p_next1 = newA(float, n * k + 1);
+    double *p_next1 = newA(double, n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) p_next1[i] = 0; } //0 if unchanged
     p_next1[n * k] = NAN;
     bool *frontier = newA(bool, n); // Frontier should be whole graph's edges
@@ -227,7 +231,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     vertexSubset Frontier(n, n, frontier);
 
-    float *W = newA(float, n * k + 1);
+    double *W = newA(double, n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) W[i] = 0; }
     W[n * k] = NAN;
 
@@ -268,7 +272,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
 
 // n - nr. vertices. k - nr. classes
-void print_to_file(const float *Z, string file_name, const int n, const int k) {
+void print_to_file(const double *Z, string file_name, const int n, const int k) {
     cout << "\n\nSaving Z to " << file_name << "\n";
     std::ofstream outfile(file_name);
     if (outfile.is_open()) {
