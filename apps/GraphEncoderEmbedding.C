@@ -115,7 +115,7 @@ struct PR_Vertex_Reset {
 // Run GEE
 template<class vertex>
 void Compute(graph<vertex> &GA, commandLine P) {
-    const int k = P.getOptionLongValue("-nClusters", 3); // TODO Ariel Impl. this later
+    const int k = P.getOptionLongValue("-nClusters", 3);
 
     // Embedding semi-supervised labels
     const string Y_LOCATION = P.getOptionValue("-yLocation", "None");
@@ -196,11 +196,6 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     edgeMap(GA, Frontier, PR_F<vertex>(p_curr1, p_next1, n, Y, W, GA.V, laplacian), 0, no_output);
 
-//    // Debugging inf output Ariel
-//    for (int i = 0; i < n * 20; i++) {
-//        if (p_next1[i] > 10000)
-//            cout << i << ": " << p_next1[i] << "\n";
-//    }
 
 // Use this to print output to file to test correctness
     if (saveEmbedding == "true")
