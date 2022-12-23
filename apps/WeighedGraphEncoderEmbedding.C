@@ -64,10 +64,19 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
         //update function applies PageRank equation
 
         if (laplacian == "false") {
-            if (Y[s] >= 0)
+//            if (s == 0 && d == 49569)
+//                int gimi_debug = 1;
+
+            if (Y[s] >= 0) {
                 z_next[Y[s] * n + d] += W[Y[s] * n + s] * weight;
-            if (Y[d] >= 0 && s != d)
+                if (z_next[n] > .0212)
+                    int gimi_debug = 1;
+            }
+            if (Y[d] >= 0 && s != d) {
                 z_next[Y[d] * n + s] += W[Y[d] * n + d] * weight;
+                if (z_next[n] > .0212)
+                    int gimi_debug = 1;
+            }
         } else {
             const double deg_s = 1 / sqrt(laplacian_degree_vector[s]);
             const double deg_d = 1 / sqrt(laplacian_degree_vector[d]);
