@@ -168,12 +168,15 @@ void Compute(graph<vertex> &GA, commandLine P) {
 // W: encoder marix. W[i,k] = {1/nk if Yi==k, otherwise 0}
 
 // Not doing possibility_detected from GEE.py
+// TODO this is wrong - racy write on nonzeroYCount
+// TODO write a reducer on nonzeroYCount
     int nk[k]; // Confirmed correct Facebook graph
     {
         parallel_for (int i = 0; i < k; i++) {
             int nonzeroYCount = 0;
+
             {
-                parallel_for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
+                for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
                     if (Y[j] == i)
                         nonzeroYCount++;
                 }

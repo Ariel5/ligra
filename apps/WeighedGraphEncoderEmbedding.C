@@ -225,11 +225,13 @@ void Compute(graph<vertex> &GA, commandLine P) {
 // Not doing possibility_detected from GEE.py
     int nk[k]; // Confirmed correct Facebook graph
 // TODO Ariel implement count_nonzero later. Should return nk = {3,2}
+// TODO this is wrong - racy write on nonzeroYCount
+// TODO write a reducer on nonzeroYCount
     {
         parallel_for (int i = 0; i < k; i++) {
             int nonzeroYCount = 0;
             {
-                parallel_for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
+                for (int j = 0; j < n; j++) {// nk = np.count_nonzero(Y[:,0]==i)
                     if (Y[j] == i)
                         nonzeroYCount++;
                 }
