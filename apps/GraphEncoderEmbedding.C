@@ -127,7 +127,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     if (Y_LOCATION != "None") {
         timer t; t.start();
-        cout << "Loading specified Y file at " + Y_LOCATION;
+        cout << "Loading Y at " + Y_LOCATION;
         string a;
         std::ifstream infile(Y_LOCATION);
         if (infile.fail()) {
@@ -141,7 +141,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
                 i++;
             }
         }
-        t.stop(); t.reportTotal("Y loading time: ");
+        t.stop(); t.reportTotal(" took: ");
     }
 
 // nk: 1*n array, contains the number of observations in each class
