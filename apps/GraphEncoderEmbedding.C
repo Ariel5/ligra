@@ -14,14 +14,15 @@ void print_to_file(const double* Z, string file_name, const int n, const int k);
 size_t getCurrentRSS();
 size_t getPeakRSS();
 
-// TODO Ariel Assuming unweighted graph - No weighed examples in Ligra, despite how supposedly "easy" it is to extend
+// Ariel This file only works unweighted graph -
+// No weighed examples in Ligra, despite how supposedly "easy" it is to extend
 
 // Ariel - PRUpdate(s,d) in paper
 template<class vertex>
 struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     double *z_curr;
     double *z_next; // Ariel - these are already vectors! No need to worry about assigning them
-//    double *z_curr2, *z_next2; // TODO Ariel make matrix later. C++ pointers are fighting me. Now: check correctness
+
     int *Y; // Supervised labels for each vertex. More fitting as memeber of Vertex class but whatever
     vertex *V;
     const int n;
@@ -38,10 +39,11 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     inline bool update(uintE d, uintE s) { //update function applies PageRank equation
         // Ariel I believe -1 or negative label means don't know - ignored
 
-
-        if (Y[s] >= 0)
+        // Algorithm runs in either push or pull mode
+        if (Y[s] >= 0) // Push mode
             z_next[Y[s] * n + d] += W[Y[s] * n + s];
         if (Y[d] >= 0 && s != d) // Asymmetric in GEE.py too. Also, in Ligra s,d are swapped
+            // Pull mode
             z_next[Y[d] * n + s] += W[Y[d] * n + d];
 
         return 1;
