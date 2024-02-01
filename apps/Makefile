@@ -50,7 +50,8 @@ $(MEM) # Parallel
 else
 # check for Linux and run other commands
 PCC = g++ # Add these for parallel run -fopenmp -DOPENMP. To Debug, add -g
-PCFLAGS = -std=c++14 -march=native -O3 -fopenmp -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Parallel
+PCFLAGS = -std=c++14 -g $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Debug
+#PCFLAGS = -std=c++14 -march=native -O3 -fopenmp -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Parallel
 # PCFLAGS = -std=c++14 -march=native -O3 $(INTT) $(INTE) $(CODE) $(PD) $(MEM) # Serial
 endif
 
