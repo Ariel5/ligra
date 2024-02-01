@@ -12,6 +12,7 @@ for ys_file in "$ys_dir"/*.csv; do
   # Construct the path to the corresponding Ligra file
   ligra_file="$ligra_dir/${base_name}.AdjGraph"
 
+  echo "Processing graph: $base_name"
   # Run your command with the Ys file and the Ligra file
   ./GraphEncoderEmbedding -rounds 7 -nClusters 50 -saveEmbedding false -Laplacian false -yLocation "$ys_file" "$ligra_file"
 done
