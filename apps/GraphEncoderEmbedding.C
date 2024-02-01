@@ -39,21 +39,29 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
     inline bool update(uintE d, uintE s) { //update function applies PageRank equation
         // Ariel I believe -1 or negative label means don't know - ignored
 
-        // Algorithm runs in either push or pull mode
-        if (Y[s] >= 0) // Push mode
-            z_next[Y[s] * n + d] += W[Y[s] * n + s];
-        if (Y[d] >= 0 && s != d) // Asymmetric in GEE.py too. Also, in Ligra s,d are swapped
-            // Pull mode
-            z_next[Y[d] * n + s] += W[Y[d] * n + d];
+        // Always use Atomic update
+        updateAtomic(d, s)
+
+//        if (Y[s] >= 0)
+//            z_next[Y[s] * n + d] += W[Y[s] * n + s];
+//        if (Y[d] >= 0 && s != d) // Asymmetric in GEE.py too. Also, in Ligra s,d are swapped
+//            z_next[Y[d] * n + s] += W[Y[d] * n + d];
 
         return 1;
     }
 
-    // TODO Ariel Hope this isn't used bcs. I didn't change it lol
-    inline bool updateAtomic(uintE s, uintE d) { //atomic Update
-//        writeAdd(&z_next[d], z_curr[s] / V[s].getOutDegree()); // TODO Ariel When to use this vs. Normal
+    // Contention possible when neighbors of node have same class, therefore
+    // write to the same cell in z_next
+    inline bool updateAtomic(uintE d, uintE s) {
+        if (Y[s] >= 0) {
+            writeAdd(&z_next[Y[s] * n + d], W[Y[s] * n + s]);
+        }
+        if (Y[d] >= 0 && s != d) {
+            writeAdd(&z_next[Y[d] * n + s], W[Y[d] * n + d]);
+        }
         return 1;
     }
+
 
     inline bool cond(intT d) { return cond_true(d); }
 }; // No condition. Apply to all vertices
@@ -115,9 +123,8 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     const long long int n = GA.n;
 
-    double *p_curr1 = newA(double, 1);
-//    { parallel_for (long i = 0; i < n*k; i++) p_curr1[i] = 0; } // Init all in parallel
-    double *p_next1 = newA(double, n * k + 1);
+    double *p_curr1 = newA(double, 1); // Not needed
+    double *p_next1 = newA(double n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) p_next1[i] = 0; } //0 if unchanged
     p_next1[n * k] = NAN;
     bool *frontier = newA(bool, n); // Frontier should be whole graph's edges
@@ -127,7 +134,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 
     if (Y_LOCATION != "None") {
         timer t; t.start();
-        cout << "Loading Y at " + Y_LOCATION;
+        cout << "Loading specified Y file at " + Y_LOCATION;
         string a;
         std::ifstream infile(Y_LOCATION);
         if (infile.fail()) {
@@ -141,7 +148,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
                 i++;
             }
         }
-        t.stop(); t.reportTotal(" took: ");
+        t.stop(); t.reportTotal("Y loading time: ");
     }
 
 // nk: 1*n array, contains the number of observations in each class
@@ -150,7 +157,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
 // Not doing possibility_detected from GEE.py
 // TODO this is wrong - racy write on nonzeroYCount
 // TODO write a reducer on nonzeroYCount
-    int nk[k]; // Confirmed correct Facebook graph
+    int nk[k]; // correct on Facebook graph
     {
         parallel_for (int i = 0; i < k; i++) {
             int nonzeroYCount = 0;
