@@ -40,7 +40,7 @@ struct PR_F { // Do this to edges. But aren't edges defn. by their vertices?
         // Ariel I believe -1 or negative label means don't know - ignored
 
         // Always use Atomic update
-        updateAtomic(d, s)
+        updateAtomic(d, s);
 
 //        if (Y[s] >= 0)
 //            z_next[Y[s] * n + d] += W[Y[s] * n + s];
