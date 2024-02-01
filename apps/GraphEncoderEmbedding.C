@@ -124,7 +124,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
     const long long int n = GA.n;
 
     double *p_curr1 = newA(double, 1); // Not needed
-    double *p_next1 = newA(double n * k + 1);
+    double *p_next1 = newA(double, n * k + 1);
     { parallel_for (long i = 0; i < n * k; i++) p_next1[i] = 0; } //0 if unchanged
     p_next1[n * k] = NAN;
     bool *frontier = newA(bool, n); // Frontier should be whole graph's edges
@@ -133,8 +133,8 @@ void Compute(graph<vertex> &GA, commandLine P) {
     int *Y = newA(int, n); // TODO maybe set some classes to 1. GEE chooses 2 of 5 vertices in class 1
 
     if (Y_LOCATION != "None") {
-        timer t; t.start();
-        cout << "Loading specified Y file at " + Y_LOCATION;
+//        timer t; t.start();
+//        cout << "Loading specified Y file at " + Y_LOCATION;
         string a;
         std::ifstream infile(Y_LOCATION);
         if (infile.fail()) {
@@ -148,7 +148,7 @@ void Compute(graph<vertex> &GA, commandLine P) {
                 i++;
             }
         }
-        t.stop(); t.reportTotal("Y loading time: ");
+//        t.stop(); t.reportTotal("Y loading time: ");
     }
 
 // nk: 1*n array, contains the number of observations in each class
